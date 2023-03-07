@@ -1,0 +1,20 @@
+{
+    "main": "dist/main.js",
+    "scripts": {
+        "build": "tsc",
+        "prepare": "npm run build",
+        "dev": "npm run build && node ."
+    },
+    "type": "module",
+    "dependencies": {
+        "@types/node": "^18.14.2",
+        "cron": "^2.2.0",
+        "dotenv": "^16.0.3",
+        "eris": "^0.17.1",
+        "mongodb": "^5.1.0"
+    },
+    "devDependencies": {
+        "@types/cron": "^2.0.0",
+        "@types/ws": "^8.5.4"
+    }
+}
