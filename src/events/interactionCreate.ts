@@ -5,9 +5,12 @@ import {
     type CommandInteraction,
     type ComponentInteraction,
     type AutocompleteInteraction,
-    User,
+    type User,
+    type GuildTextableChannel,
+    type Message
 } from 'eris'
 import {
+    MessageComponentData,
     SlashCommandOptionTypes
 } from "../structures/SlashCommand.js";
 import {
@@ -23,7 +26,7 @@ export type ConvertedCommandOptions = {
     }
 }
 
-type BulkInteraction = PingInteraction
+export type BulkInteraction = PingInteraction
     | UnknownInteraction
     | CommandInteraction
     | ComponentInteraction
@@ -47,16 +50,50 @@ export default class InteractionCreate extends Event {
                 break;
 
             case InteractionTypes.APPLICATION_COMMAND:
-                this.handleCommand(interaction as CommandInteraction);
+                this.handleCommand(interaction as CommandInteraction<GuildTextableChannel>);
+                break;
+
+            case InteractionTypes.MESSAGE_COMPONENT:
+                this.handleMessageComponent(interaction as ComponentInteraction)
                 break;
         }
+    }
+
+    async handleMessageComponent(interaction: ComponentInteraction) {
+        await interaction.acknowledge();
+
+        const Command = this.client.localCommands.get(interaction.data.custom_id.split('-')[0]);
+        if (!Command) {
+            throw new Error('User is trying to use message component that is not handled properly. ' + interaction.data.custom_id)
+        }
+
+        await Command.handleMessageComponent(interaction as ComponentInteraction<GuildTextableChannel>)
+
+        // try {
+        //     await interaction.acknowledge()
+
+
+        //     if (!interaction.data.custom_id) {
+        //         throw new Error('Message component interaction is missing custom_id')
+        //     }
+
+        //     const Command = this.client.localCommands.get(interaction.data.custom_id.split('-')[0]);
+        //     if (!Command) {
+        //         throw new Error(`User trying to use message component that is not handled properly. \nCustom ID: ${interaction.data.custom_id}\nMessage ID: ${interaction.message.id}`)
+        //     }
+
+        //     await Command?.handleMessageComponent(interaction);
+        // } catch (e) {
+        //     // figure out why this is erroring.
+        //     throw new Error('Could not handle message component' + e);
+        // }
     }
 
     handlePing(interaction: PingInteraction) {
         interaction.acknowledge();
     }
 
-    async handleCommand(interaction: CommandInteraction) {
+    async handleCommand(interaction: CommandInteraction<GuildTextableChannel>) {
         try {
             if (!interaction.member) {
                 throw new Error('An unexpected error occured, please try again.')

@@ -1,0 +1,209 @@
+import type { ObjectId } from "mongodb";
+
+export type Item = AttackItem | PotionItem | ShieldItem | ArmorItem;
+
+export enum AttackItemTypes {
+    SWORD = 1,
+    AXE = 2,
+    LONG_SWORD = 3,
+    SHORT_SWORD = 4,
+    DAGGER = 5,
+    // Bow does not have limited amount of arrows
+    BOW = 6
+}
+
+export type BaseItem = {
+    name: string;
+    // Price in the store will fluctuate - Not all items are available;
+    minPrice?: number;
+    maxPrice?: number;
+}
+
+// Crit booster of attack items is 10%
+export type AttackItem = {
+    type: AttackItemTypes;
+    damage: number;
+    // Health will be removed whenever a user blocks or attacks.
+    health: number;
+} & BaseItem;
+
+export enum PotionItemTypes {
+    HEALING = 1,
+    DAMAGE = 2,
+    // Slow potion will stun the enemy making them unable to attack for a short time.
+    SLOW = 3
+}
+
+export type PotionItem = {
+    type: PotionItemTypes,
+
+    // Amount of healing that needs to be given;
+    heal: number;
+    // Amount of damage that needs to be given;
+    damage: number;
+    // Level of the slowness potion
+    /**
+     * Level 1: Slowed for 1 move;
+     * Level 2: Slowed for 2 moves;
+     * Level 3: Slowed for 3 moves;
+     */
+    slowness: 1 | 2 | 3
+} & BaseItem;
+
+export type ShieldItem = {
+    health: number;
+} & BaseItem;
+
+export enum ArmorTypes {
+    HELMET = 1,
+    CHESTPLATE = 2,
+    PANTS = 3,
+    BOOTS = 4,
+}
+
+export type ArmorItem = {
+    type: ArmorTypes
+} & BaseItem;
+
+export type Adventure = {
+    // Display name of the adventure;
+    name: string;
+    // Enemies on the adventure;
+    enemies: Enemey[];
+    // Maximum amount of gold a player can recieve.
+    maxGold: number;
+    // Minimum amount of gold a player can recieve.
+    minGold: number;
+    // Maximum amount of experience a player can recieve.
+    maxExperience: number;
+    // Minimum amount of experience a player can recieve.
+    minExperience: number;
+    // The possible rewards a user can recieve for completing the adventure.
+    possibleCompletionRewards: Item[];
+    // Possible failure rewards, given to users so they're not left with nothing; Could also be mixed with completion rewards if completed.
+    possibleRewards: Item[];
+
+}
+
+export type Enemey = {
+    health: number;
+    name: string;
+    weapon: AttackItem;
+    // Whether the player is able to obtain the item.
+    // Items are obtainable upon completion.
+    isItemDroppable?: boolean;
+    armor?: ArmorItem;
+}
+
+export type DatabaseUserType = {
+    _id: string;
+    gold: number;
+    experience: number;
+    // Command cooldowns
+    commandCooldowns?: { [key: string]: number }
+    // Adventure related things;
+    adventures: {
+        inventory?: {
+            equiped: {
+                // A user can bring up to 2 attack items.
+                attack: AttackItem[],
+                // A user can bring multiple potions
+                potion: PotionItem[],
+                // A user can only have one shield
+                sheild: ShieldItem,
+                // A user can have a full set of armor.
+                armor: ArmorItem[]
+            };
+            other: Item[];
+        };
+        isCurrentlyAdventuring: boolean;
+        // Will only show up whenever the user has an adventure going.
+        adventureId?: string;
+        stats?: {
+            totalAdventures: number;
+            adventuresWon: number;
+        }
+    }
+
+    // Discord user id.
+    marriedTo?: string;
+};
+
+export type DatabaseGuildType = {
+    _id: string;
+    // Contains all modlog entries for the guild.
+    modlog: ModLogEntry[]
+
+    // Moderation settings -- todo; automod;
+    moderation: {
+        roles: {
+            muted: string | null
+        }
+    }
+};
+
+export type ModLogEntry = {
+    // Random object id that will be displayed on the ticket.
+    _id: ObjectId;
+    type: ModLogTypes
+    createdAt: Date;
+    // Shouldn't be on anything that doesn't have a task assigned to.
+    endsAt?: Date;
+    ticketNumber: number;
+}
+
+export enum ModLogTypes {
+    // Mute a user.
+    MUTE = 1,
+    // Kick a user.
+    KICK = 2,
+    // Ban a user.
+    BAN = 3,
+    // Timeout a user.
+    TIMEOUT = 4,
+    // Softban a user.
+    SOFTBAN = 5,
+    // Purge messages.
+    PURGE = 6,
+    // Delete message.
+    DELETE_MESSAGE = 7,
+    // Unmute a user.
+    UNMUTE = 8,
+    // Unban a user.
+    UNBAN = 9,
+}
+
+export enum TaskTypes {
+    UNBAN = 1,
+    UNMUTE = 2,
+    // Other RPG event things here.
+}
+
+// Will be used for queued processes using a cron loop.
+export type DatabaseTask = {
+    // Same id as the mod log ticket that was created.
+    _id: ObjectId;
+    // If the task was edited, then it will be shown.
+    updatedAt?: Date;
+    // Whenever the task was created.
+    createdAt: Date;
+    // Whenever the task ends.
+    endsAt: Date;
+    // Task type
+    type: TaskTypes,
+    // User id with whom the task is assigned to.
+    user: string,
+    // Guild that it needs to happen in.
+    guild: string
+}
+
+export enum MessageComponentTypes {
+    ACTION_ROW = 1,
+    BUTTON = 2,
+    STRING_SELECT = 3,
+    TEXT_INPUT = 4,
+    USER_SELECT = 5,
+    ROLE_SELECT = 6,
+    MENTIONABLE_SELECT = 7,
+    CHANNEL_SELECT = 8
+}

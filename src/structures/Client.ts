@@ -1,10 +1,12 @@
 import {
     type ClientOptions,
-    Client
+    Client,
+    ComponentInteraction
 } from 'eris';
 import {
     config
 } from '../config.js';
+
 import {
     Database
 } from '../util/Database.js';
@@ -18,6 +20,14 @@ import {
     type ExtendedSlashCommand,
     type SlashCommand
 } from './SlashCommand.js';
+
+enum InteractionTypes {
+    PING = 1,
+    APPLICATION_COMMAND = 2,
+    MESSAGE_COMPONENT = 3,
+    APPLICATION_COMMAND_AUTOCOMPLETE = 5,
+    MODAL_SUBMIT = 6
+}
 
 export class Bot extends Client {
     developers: string[] = config.developers;
@@ -45,6 +55,27 @@ export class Bot extends Client {
     public resolveUser(user: string) {
         return this.users.get(/<@!?(\d+)>/g.exec(user)?.[1] ?? user)
             ?? this.users.find((u) => u.username.toLowerCase() === user.toLowerCase());
+    }
+
+    public awaitComponentInteraction(
+        filter: (interaction: ComponentInteraction) => boolean,
+        timeout: number = 60000
+    ) {
+
+        return new Promise<ComponentInteraction>((resolve, reject) => {
+            const listener = (interaction: ComponentInteraction) => {
+                if (interaction.type === InteractionTypes.MESSAGE_COMPONENT && filter(interaction as ComponentInteraction)) {
+                    this.off('interactionCreate', listener);
+                    resolve(interaction);
+                }
+
+                this.on('interactionCreate', listener);
+                setTimeout(() => {
+                    this.off('interactionCreate', listener);
+                    reject(new Error('No component interaction was collected in time.'))
+                }, timeout)
+            }
+        })
     }
 
 

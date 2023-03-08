@@ -4,7 +4,16 @@ import {
     MongoClient,
     ObjectId
 } from 'mongodb';
-import { config } from '../config.js';
+import {
+    config
+} from '../config.js';
+import {
+    type DatabaseUserType,
+    type DatabaseGuildType,
+    type DatabaseTask,
+    type ModLogEntry,
+    TaskTypes,
+} from '../types.js'
 import {
     Member,
     type Guild,
@@ -14,26 +23,7 @@ import { CronJob } from 'cron'
 import { Bot } from '../structures/Client.js'
 
 
-export type DatabaseUserType = {
-    _id: string;
-    gold: number;
-    experience: number;
-    // Command cooldowns
-    commandCooldowns?: { [key: string]: number }
-    // Adventure related things;
-    adventures: {
-        isCurrentlyAdventuring: boolean;
-        // Will only show up whenever the user has an adventure going.
-        adventureId?: string;
-        stats?: {
-            totalAdventures: number;
-            adventuresWon: number;
-        }
-    }
 
-    // Discord user id.
-    marriedTo?: string;
-};
 
 export class DatabaseUser {
     gold = config.settings.economy.defaultGold;
@@ -46,78 +36,9 @@ export class DatabaseUser {
     constructor(public _id: string) { }
 }
 
-// Might be used for leveling, realistically won't be used for anything.
-export type DatabaseGuild = {
-    _id: string;
-    // Contains all modlog entries for the guild.
-    modlog: ModLogEntry[]
-
-    // Moderation settings -- todo; automod;
-    moderation: {
-        roles: {
-            muted: string | null
-        }
-    }
-};
-
-export type ModLogEntry = {
-    // Random object id that will be displayed on the ticket.
-    _id: ObjectId;
-    type: ModLogTypes
-    createdAt: Date;
-    // Shouldn't be on anything that doesn't have a task assigned to.
-    endsAt?: Date;
-    ticketNumber: number;
-}
-
-export enum ModLogTypes {
-    // Mute a user.
-    MUTE = 1,
-    // Kick a user.
-    KICK = 2,
-    // Ban a user.
-    BAN = 3,
-    // Timeout a user.
-    TIMEOUT = 4,
-    // Softban a user.
-    SOFTBAN = 5,
-    // Purge messages.
-    PURGE = 6,
-    // Delete message.
-    DELETE_MESSAGE = 7,
-    // Unmute a user.
-    UNMUTE = 8,
-    // Unban a user.
-    UNBAN = 9,
-}
-
-export enum TaskTypes {
-    UNBAN = 1,
-    UNMUTE = 2,
-    // Other RPG event things here.
-}
-
-// Will be used for queued processes using a cron loop.
-export type DatabaseTask = {
-    // Same id as the mod log ticket that was created.
-    _id: ObjectId;
-    // If the task was edited, then it will be shown.
-    updatedAt?: Date;
-    // Whenever the task was created.
-    createdAt: Date;
-    // Whenever the task ends.
-    endsAt: Date;
-    // Task type
-    type: TaskTypes,
-    // User id with whom the task is assigned to.
-    user: string,
-    // Guild that it needs to happen in.
-    guild: string
-}
-
 export class Database {
     private users!: Collection<DatabaseUserType>;
-    private guilds!: Collection<DatabaseGuild>;
+    private guilds!: Collection<DatabaseGuildType>;
     private tasks!: Collection<DatabaseTask>;
     private client: Bot
 
@@ -235,10 +156,10 @@ export class Database {
     /**
      * Ensure that a user exists in the database.
      * @param {Guild} guild Discord guild.
-     * @returns {Promise<DatabaseGuild>}
+     * @returns {Promise<DatabaseGuildType>}
      */
-    private async ensureGuild(guild: Guild): Promise<DatabaseGuild> {
-        const NewGuild: DatabaseGuild = {
+    private async ensureGuild(guild: Guild): Promise<DatabaseGuildType> {
+        const NewGuild: DatabaseGuildType = {
             _id: guild.id,
             modlog: [],
             moderation: {
@@ -277,10 +198,10 @@ export class Database {
 
     /** Edit a guild in the database.
      * @param {Guild} guild Discord guild.
-     * @param {Partial<DatabaseGuild>} changes Changes you want to make to the guild.
-     * @returns {Promise<DatabaseGuild>}
+     * @param {Partial<DatabaseGuildType>} changes Changes you want to make to the guild.
+     * @returns {Promise<DatabaseGuildType>}
      */
-    async editGuild(guild: Guild, changes: Partial<DatabaseGuild>): Promise<DatabaseGuild> {
+    async editGuild(guild: Guild, changes: Partial<DatabaseGuildType>): Promise<DatabaseGuildType> {
         try {
             await this.ensureGuild(guild);
             await this.users.updateOne({ _id: guild.id }, changes, {
@@ -295,9 +216,9 @@ export class Database {
     /**
      * Get a guild in the database.
      * @param {Guild} guild Discord guild. 
-     * @returns {Promise<DatabaseGuild>}
+     * @returns {Promise<DatabaseGuildType>}
      */
-    async getGuild(guild: Guild): Promise<DatabaseGuild> {
+    async getGuild(guild: Guild): Promise<DatabaseGuildType> {
         try {
             await this.ensureGuild(guild);
             const FetchedGuild = (await this.guilds.findOne({ _id: guild.id }))!;

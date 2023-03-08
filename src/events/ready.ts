@@ -11,24 +11,19 @@ export default class Ready extends Event {
         const { username, discriminator, id } = this.client.user;
         console.log(`${username}#${discriminator} (${id}) is now online!`)
 
-        this.editCommands([...this.client.localCommands].map((command) => command[1].slashCommandData))
+        this.editCommands([...this.client.localCommands].slice(0, 25).map((command) => command[1].slashCommandData))
     }
 
-    editCommands(commands: SlashCommandData[]) {
+    async editCommands(commands: SlashCommandData[]) {
         try {
-            for (const [index, command] of commands.entries()) {
+            for await (const [index, command] of commands.entries()) {
                 if (command.name === 'help') {
-                    (commands[index].options![0] as StringOption).choices = [...this.client.localCommands]
-                        .slice(0, 25)
-                        .map((cmd) => ({
-                            name: cmd[1].slashCommandData.name,
-                            value: cmd[1].slashCommandData.name
-                        }))
+                    (commands[index].options![0] as StringOption).choices = [...commands.map((command) => ({ name: command.name, value: command.name }))]
                 }
             }
-    
+
             this.client.bulkEditCommands(commands as any);
-        } catch(e) {
+        } catch (e) {
             throw new Error('Commands could not be edited.')
         }
     }

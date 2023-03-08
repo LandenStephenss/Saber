@@ -3,9 +3,12 @@ import {
     type Bot
 } from './Client.js'
 import {
+    type GuildTextableChannel,
+    type Message,
     type AdvancedMessageContent,
     type CommandInteraction,
-    type MessageContent
+    type MessageContent,
+    ComponentInteraction
 } from 'eris'
 import {
     ConvertedCommandOptions
@@ -16,7 +19,7 @@ export type SlashCommandData = {
     description: string;
     options?: CommandOption[];
     default_member_permissions?: string | undefined;
-    dm_permission?: boolean;
+    dm_permission: boolean;
     nsfw?: boolean;
 }
 
@@ -63,7 +66,6 @@ type SlashCommandConstructor = {
     options?: CommandOption[],
     nsfw?: boolean;
     defaultMemberPermissions?: string;
-    dmPermission?: boolean;
     // Local things;
     category?: string;
     cooldown?: number;
@@ -180,6 +182,12 @@ type SlashCommandLocalData = {
     ephemeral: boolean;
 }
 
+export type MessageComponentData = {
+    values: string[];
+    custom_id?: string;
+    component_type: number;
+}
+
 export abstract class SlashCommand {
     slashCommandData: SlashCommandData;
     localData: SlashCommandLocalData;
@@ -190,7 +198,6 @@ export abstract class SlashCommand {
         description,
         options,
         defaultMemberPermissions,
-        dmPermission = false,
         nsfw,
         // Local stuff
         category = 'miscellaneous',
@@ -202,7 +209,8 @@ export abstract class SlashCommand {
             description,
             options,
             default_member_permissions: defaultMemberPermissions,
-            dm_permission: dmPermission,
+            // no commands should be able to be ran in a DM;
+            dm_permission: false,
             nsfw,
         }
 
@@ -213,7 +221,9 @@ export abstract class SlashCommand {
         }
     }
 
-    abstract run(interaction: CommandInteraction, options?: ConvertedCommandOptions): AdvancedMessageContent | MessageContent | Promise<AdvancedMessageContent | MessageContent>
+    handleMessageComponent(interaction: ComponentInteraction): void | Promise<void> {};
+
+    abstract run(interaction: CommandInteraction<GuildTextableChannel>, options?: ConvertedCommandOptions): AdvancedMessageContent | MessageContent | Promise<AdvancedMessageContent | MessageContent>
 }
 
 export type ExtendedSlashCommand = new (client: Bot) => SlashCommand;
