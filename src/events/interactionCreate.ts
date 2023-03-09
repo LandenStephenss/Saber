@@ -13,7 +13,7 @@ import {
 import {
     InteractionAutocompleteChoices,
     SlashCommandOptionTypes
-} from "../structures/SlashCommand.js";
+} from "../types.js";
 import {
     config
 } from '../config.js';

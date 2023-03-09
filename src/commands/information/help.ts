@@ -1,7 +1,6 @@
 import {
-    InteractionAutocompleteChoices,
+
     SlashCommand,
-    SlashCommandOptionTypes
 } from "../../structures/SlashCommand.js";
 import {
     type Bot
@@ -17,8 +16,10 @@ import {
     ConvertedCommandOptions
 } from "../../events/interactionCreate.js";
 import {
+    InteractionAutocompleteChoices,
     MessageComponentButtonStyles,
-    MessageComponentTypes
+    MessageComponentTypes,
+    SlashCommandOptionTypes
 } from '../../types.js'
 
 export default class Help extends SlashCommand {
@@ -26,6 +27,7 @@ export default class Help extends SlashCommand {
         all: 'help-allcommands',
         select: 'help-selectcommand'
     }
+
     constructor(public client: Bot) {
         super({
             name: 'help',
@@ -44,7 +46,7 @@ export default class Help extends SlashCommand {
         })
     }
 
-    searchCommands(query: string) {
+    private searchCommands(query: string) {
         if (query && query.trim().length == 0) {
             return [...this.client.localCommands];
         }
@@ -83,7 +85,7 @@ export default class Help extends SlashCommand {
         }
     }
 
-    createCommandEmbed(query: string = 'help'): AdvancedMessageContent {
+    private createCommandEmbed(query: string = 'help'): AdvancedMessageContent {
         try {
             const Command = this.client.localCommands.get(query);
             if (!Command) {
@@ -145,7 +147,7 @@ export default class Help extends SlashCommand {
         }
     };
 
-    createBulkEmbed(): AdvancedMessageContent {
+    private createBulkEmbed(): AdvancedMessageContent {
         const Fields: string[] = []
 
         for (const [, { localData: { category } }] of this.client.localCommands) {

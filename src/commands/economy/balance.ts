@@ -2,9 +2,9 @@ import { CommandInteraction, User } from "eris";
 import { ConvertedCommandOptions } from "../../events/interactionCreate.js";
 import { Bot } from "../../structures/Client.js";
 import {
-    SlashCommandOptionTypes,
     SlashCommand
 } from "../../structures/SlashCommand.js";
+import { SlashCommandOptionTypes } from "../../types.js";
 
 export default class Ping extends SlashCommand {
     constructor(public client: Bot) {
@@ -12,6 +12,7 @@ export default class Ping extends SlashCommand {
             name: 'balance',
             description: 'See how much gold you have.',
             category: 'economy',
+            ephemeral: true,
             options: [
                 {
                     type: SlashCommandOptionTypes.USER,

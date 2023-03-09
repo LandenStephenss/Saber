@@ -1,7 +1,7 @@
 import { Event } from "../structures/Event.js";
 import {
     type SlashCommandData,
-} from '../structures/SlashCommand.js';
+} from '../types.js';
 
 export default class Ready extends Event {
     name = "ready";
