@@ -4,11 +4,10 @@ import {
 } from './Client.js'
 import {
     type GuildTextableChannel,
-    type Message,
     type AdvancedMessageContent,
     type CommandInteraction,
     type MessageContent,
-    ComponentInteraction
+    ComponentInteraction,
 } from 'eris'
 import {
     ConvertedCommandOptions
@@ -188,9 +187,17 @@ export type MessageComponentData = {
     component_type: number;
 }
 
+export type InteractionAutocompleteChoices = {
+    name: string;
+    value: string;
+}
+
 export abstract class SlashCommand {
     slashCommandData: SlashCommandData;
     localData: SlashCommandLocalData;
+
+    handleCommandAutocomplete?(option: string, value: string): InteractionAutocompleteChoices[] | Promise<InteractionAutocompleteChoices[]>;
+    handleMessageComponent?(interaction: ComponentInteraction): void;
 
     constructor({
         // Discord stuff
@@ -220,8 +227,6 @@ export abstract class SlashCommand {
             ephemeral
         }
     }
-
-    handleMessageComponent(interaction: ComponentInteraction): void | Promise<void> {};
 
     abstract run(interaction: CommandInteraction<GuildTextableChannel>, options?: ConvertedCommandOptions): AdvancedMessageContent | MessageContent | Promise<AdvancedMessageContent | MessageContent>
 }

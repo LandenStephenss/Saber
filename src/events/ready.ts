@@ -1,7 +1,6 @@
 import { Event } from "../structures/Event.js";
 import {
     type SlashCommandData,
-    type StringOption
 } from '../structures/SlashCommand.js';
 
 export default class Ready extends Event {
@@ -16,12 +15,6 @@ export default class Ready extends Event {
 
     async editCommands(commands: SlashCommandData[]) {
         try {
-            for await (const [index, command] of commands.entries()) {
-                if (command.name === 'help') {
-                    (commands[index].options![0] as StringOption).choices = [...commands.map((command) => ({ name: command.name, value: command.name }))]
-                }
-            }
-
             this.client.bulkEditCommands(commands as any);
         } catch (e) {
             throw new Error('Commands could not be edited.')

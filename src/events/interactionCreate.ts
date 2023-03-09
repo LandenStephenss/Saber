@@ -7,10 +7,11 @@ import {
     type AutocompleteInteraction,
     type User,
     type GuildTextableChannel,
-    type Message
+    AdvancedMessageContent,
+    InteractionDataOptionsWithValue
 } from 'eris'
 import {
-    MessageComponentData,
+    InteractionAutocompleteChoices,
     SlashCommandOptionTypes
 } from "../structures/SlashCommand.js";
 import {
@@ -36,8 +37,8 @@ enum InteractionTypes {
     PING = 1,
     APPLICATION_COMMAND = 2,
     MESSAGE_COMPONENT = 3,
-    APPLICATION_COMMAND_AUTOCOMPLETE = 5,
-    MODAL_SUBMIT = 6
+    APPLICATION_COMMAND_AUTOCOMPLETE = 4,
+    MODAL_SUBMIT = 5
 }
 
 export default class InteractionCreate extends Event {
@@ -56,37 +57,73 @@ export default class InteractionCreate extends Event {
             case InteractionTypes.MESSAGE_COMPONENT:
                 this.handleMessageComponent(interaction as ComponentInteraction)
                 break;
+
+            case InteractionTypes.APPLICATION_COMMAND_AUTOCOMPLETE:
+                this.handleAutocomplete(interaction as AutocompleteInteraction<GuildTextableChannel>)
+                break;
         }
     }
 
-    async handleMessageComponent(interaction: ComponentInteraction) {
-        await interaction.acknowledge();
+    async handleAutocomplete(interaction: AutocompleteInteraction<GuildTextableChannel>) {
+        try {
+            const Command = this.client.localCommands.get(interaction.data.name);
+            console.log(Command);
+            if (!Command || !Command.handleCommandAutocomplete) {
+                console.error('Could not handle autocomplete properly, ' + interaction.data.name);
+                return;
+            }
+            // @ts-expect-error
+            const FocusedOption: InteractionDataOptionsWithValue = interaction.data.options.find((opt) => opt.focused)
+            if (!FocusedOption) {
+                throw new Error('Autocomplete interaction does not have focused option');
+            }
+            const Result: InteractionAutocompleteChoices[] = await Command.handleCommandAutocomplete(FocusedOption.name, FocusedOption.value as string)
+            interaction.acknowledge(Result);
 
-        const Command = this.client.localCommands.get(interaction.data.custom_id.split('-')[0]);
-        if (!Command) {
-            throw new Error('User is trying to use message component that is not handled properly. ' + interaction.data.custom_id)
+        } catch (e) {
+            throw new Error('Could not handle autocomplete ' + e);
         }
 
-        await Command.handleMessageComponent(interaction as ComponentInteraction<GuildTextableChannel>)
 
-        // try {
-        //     await interaction.acknowledge()
+    }
 
+    createErrorMessage(error: any, isDeveloper: boolean = false): AdvancedMessageContent {
+        const Message: AdvancedMessageContent = {
+            flags: 64,
+            content: 'An unexpected error has occured'
+        }
 
-        //     if (!interaction.data.custom_id) {
-        //         throw new Error('Message component interaction is missing custom_id')
-        //     }
+        if (isDeveloper) {
+            Message.embeds = [
+                {
+                    color: 12473343,
+                    title: 'Error:',
+                    description: `\`\`\`\n${error}\`\`\``
+                }
+            ]
+        }
 
-        //     const Command = this.client.localCommands.get(interaction.data.custom_id.split('-')[0]);
-        //     if (!Command) {
-        //         throw new Error(`User trying to use message component that is not handled properly. \nCustom ID: ${interaction.data.custom_id}\nMessage ID: ${interaction.message.id}`)
-        //     }
+        return Message;
+    }
 
-        //     await Command?.handleMessageComponent(interaction);
-        // } catch (e) {
-        //     // figure out why this is erroring.
-        //     throw new Error('Could not handle message component' + e);
-        // }
+    async handleMessageComponent(interaction: ComponentInteraction) {
+        try {
+            await interaction.acknowledge();
+
+            const Command = this.client.localCommands.get(interaction.data.custom_id.split('-')[0]);
+            if (!Command || !Command.handleMessageComponent) {
+                throw new Error('User is trying to use message component that is not handled properly. ' + interaction.data.custom_id)
+            }
+
+            await Command.handleMessageComponent(interaction as ComponentInteraction<GuildTextableChannel>)
+        } catch (e: any) {
+            if (!interaction.acknowledged) {
+                await interaction.acknowledge();
+            }
+
+            await interaction.createFollowup(this.createErrorMessage(e, config.developers.includes(interaction.member!.id)))
+            throw new Error('Could not handle message component ' + e);
+        }
     }
 
     handlePing(interaction: PingInteraction) {
@@ -101,7 +138,6 @@ export default class InteractionCreate extends Event {
             const Command = this.client.localCommands.get(interaction.data.name);
             if (!Command) {
                 await interaction.acknowledge(64);
-                interaction.createFollowup('An error has occured. Please report it to a developer.');
                 throw new Error(`User ${interaction.member === undefined ? '' : `(${interaction.member.id})`} tried to use ${interaction.data.name} command. Command does not exist.`);
             }
             // Check to see if the command is on a cooldown;
@@ -167,14 +203,8 @@ export default class InteractionCreate extends Event {
                 await interaction.acknowledge(64);
             }
 
-            if (config.developers.includes(interaction.member?.id as string)) {
-                interaction.createFollowup(`\`\`\`\nAn error has occured\n\n${err}\`\`\``)
-                console.error(err);
-                return;
-            }
-
-            interaction.createFollowup('An error has occured. Please report it to a developer.');
-            console.error(err);
+            await interaction.createFollowup(this.createErrorMessage(err, config.developers.includes(interaction.member!.id)));
+            throw new Error('Could not handle command');
         }
     }
 }

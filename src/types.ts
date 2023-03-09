@@ -207,3 +207,11 @@ export enum MessageComponentTypes {
     MENTIONABLE_SELECT = 7,
     CHANNEL_SELECT = 8
 }
+
+export enum MessageComponentButtonStyles {
+    PRIMARY = 1, // blurple
+    SECONDARY =  2, // gray
+    SUCCESS = 3, // green
+    DANGER = 4, // red
+    LINK = 5, // grey, navigates to url
+}

@@ -1,4 +1,5 @@
 import {
+    InteractionAutocompleteChoices,
     SlashCommand,
     SlashCommandOptionTypes
 } from "../../structures/SlashCommand.js";
@@ -16,6 +17,7 @@ import {
     ConvertedCommandOptions
 } from "../../events/interactionCreate.js";
 import {
+    MessageComponentButtonStyles,
     MessageComponentTypes
 } from '../../types.js'
 
@@ -34,8 +36,7 @@ export default class Help extends SlashCommand {
                     description: 'Command you\'d like information about',
                     required: false,
                     type: SlashCommandOptionTypes.STRING,
-                    // Choices will be automatically added whenever commands are edited.
-                    choices: []
+                    autocomplete: true
                 }
             ],
             category: 'information',
@@ -43,20 +44,105 @@ export default class Help extends SlashCommand {
         })
     }
 
-    async handleMessageComponent(interaction: ComponentInteraction<GuildTextableChannel>): Promise<void> {
+    searchCommands(query: string) {
+        if (query && query.trim().length == 0) {
+            return [...this.client.localCommands];
+        }
+
+        return [...this.client.localCommands]
+            .filter(([, { slashCommandData: { name } }]) => name.includes(query.toLowerCase()))
+
+
+    };
+
+    handleCommandAutocomplete(option: string, value: string): InteractionAutocompleteChoices[] | Promise<InteractionAutocompleteChoices[]> {
+        switch (option) {
+            case 'command':
+                return this.searchCommands(value).map(([, { slashCommandData: { name } }]) => ({
+                    name: name,
+                    value: name
+                })).slice(0, 25);
+
+            default:
+                return [];
+        }
+    }
+
+    async handleMessageComponent(interaction: ComponentInteraction<GuildTextableChannel>) {
         switch (interaction.data.custom_id) {
             case this.customIDs.all:
-                console.log('display all commands');
+                interaction.editOriginalMessage(this.createBulkEmbed());
                 break;
             case this.customIDs.select:
-                interaction.editOriginalMessage(this.createCommandEmbed((interaction.data as ComponentInteractionSelectMenuData).values[0]));
+                try {
+                    interaction.editOriginalMessage(this.createCommandEmbed((interaction.data as ComponentInteractionSelectMenuData).values[0]));
+                } catch (e) {
+                    interaction.createMessage(`Command \`${(interaction.data as ComponentInteractionSelectMenuData).values[0]}\` does not exist.`)
+                }
                 break;
         }
     }
 
-    createCommandEmbed(command: string = 'help'): AdvancedMessageContent {
-
-        return { content: command, embeds: [] }
+    createCommandEmbed(query: string = 'help'): AdvancedMessageContent {
+        try {
+            const Command = this.client.localCommands.get(query);
+            if (!Command) {
+                throw new Error('Command does not exist');
+            }
+            return {
+                embeds: [
+                    {
+                        color: 12473343,
+                        title: Command.slashCommandData.name.split('')[0].toUpperCase() + Command.slashCommandData.name.split('').slice(1).join(''),
+                        fields: [
+                            {
+                                name: 'Description',
+                                value: Command.slashCommandData.description
+                            }
+                        ]
+                    }
+                ],
+                components: [
+                    {
+                        type: MessageComponentTypes.ACTION_ROW,
+                        components: [
+                            {
+                                type: MessageComponentTypes.BUTTON,
+                                style: MessageComponentButtonStyles.SECONDARY,
+                                custom_id: this.customIDs.all,
+                                label: 'View All Commands',
+                                emoji: {
+                                    id: null,
+                                    name: '📖'
+                                }
+                            }
+                        ]
+                    }
+                ]
+            }
+        } catch (e) {
+            return {
+                embeds: [],
+                content: `Command \`${query}\` does not exist`,
+                components: [
+                    {
+                        type: MessageComponentTypes.ACTION_ROW,
+                        components: [
+                            {
+                                type: MessageComponentTypes.BUTTON,
+                                style: MessageComponentButtonStyles.SECONDARY,
+                                custom_id: this.customIDs.all,
+                                label: 'View All Commands',
+                                emoji: {
+                                    id: null,
+                                    name: '📖'
+                                }
+                            }
+                        ]
+                    }
+                ]
+            }
+        }
     };
 
     createBulkEmbed(): AdvancedMessageContent {
@@ -71,6 +157,7 @@ export default class Help extends SlashCommand {
         return {
             embeds: [
                 {
+                    color: 12473343,
                     title: `${this.client.user.username}'s available commands!`,
                     fields: Fields.map((field) => ({
                         name: `${field.split('')[0].toUpperCase() + field.split('').slice(1).join('')}`,
@@ -105,12 +192,16 @@ export default class Help extends SlashCommand {
         }
     };
 
-    run(interaction: CommandInteraction<GuildTextableChannel>, options: ConvertedCommandOptions) {
+    run(_: CommandInteraction<GuildTextableChannel>, options: ConvertedCommandOptions) {
         // const action = this.client.awaitComponentInteraction(this.handleComponentInteraction);
-        if (options.command) {
-            return this.createBulkEmbed();
-        } else {
-            return this.createBulkEmbed();
+        try {
+            if (options.command) {
+                return this.createCommandEmbed(options.command.value as string);
+            } else {
+                return this.createBulkEmbed();
+            }
+        } catch (e: any) {
+            throw new Error(e);
         }
     }
 }
