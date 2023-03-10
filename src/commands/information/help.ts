@@ -1,22 +1,21 @@
 import {
-
     SlashCommand,
 } from "../../structures/SlashCommand.js";
 import {
     type Bot
 } from "../../structures/Client.js";
 import {
-    AdvancedMessageContent,
     type ComponentInteraction,
     type CommandInteraction,
     type GuildTextableChannel,
-    ComponentInteractionSelectMenuData,
+    type AdvancedMessageContent,
+    type ComponentInteractionSelectMenuData,
 } from "eris";
 import {
     ConvertedCommandOptions
 } from "../../events/interactionCreate.js";
 import {
-    InteractionAutocompleteChoices,
+    type InteractionAutocompleteChoices,
     MessageComponentButtonStyles,
     MessageComponentTypes,
     SlashCommandOptionTypes
@@ -57,7 +56,7 @@ export default class Help extends SlashCommand {
 
     };
 
-    handleCommandAutocomplete(option: string, value: string): InteractionAutocompleteChoices[] | Promise<InteractionAutocompleteChoices[]> {
+    handleCommandAutocomplete(option: string, value: string, options: any): InteractionAutocompleteChoices[] | Promise<InteractionAutocompleteChoices[]> {
         switch (option) {
             case 'command':
                 return this.searchCommands(value).map(([, { slashCommandData: { name } }]) => ({

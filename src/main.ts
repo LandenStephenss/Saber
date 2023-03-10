@@ -1,4 +1,6 @@
-import { Bot } from "./structures/Client.js";
+import { 
+    Bot 
+} from "./structures/Client.js";
 
 const Client = new Bot({
     intents: [ 'all' ],

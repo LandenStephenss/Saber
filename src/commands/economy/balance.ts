@@ -1,10 +1,19 @@
-import { CommandInteraction, User } from "eris";
-import { ConvertedCommandOptions } from "../../events/interactionCreate.js";
-import { Bot } from "../../structures/Client.js";
+import {
+    CommandInteraction,
+    User
+} from "eris";
+import {
+    type ConvertedCommandOptions
+} from "../../events/interactionCreate.js";
+import {
+    Bot
+} from "../../structures/Client.js";
 import {
     SlashCommand
 } from "../../structures/SlashCommand.js";
-import { SlashCommandOptionTypes } from "../../types.js";
+import {
+    SlashCommandOptionTypes
+} from "../../types.js";
 
 export default class Ping extends SlashCommand {
     constructor(public client: Bot) {

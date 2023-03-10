@@ -6,7 +6,6 @@ import {
 import {
     config
 } from '../config.js';
-
 import {
     Database
 } from '../util/Database.js';

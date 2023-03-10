@@ -1,5 +1,9 @@
-import { Bot } from "../../structures/Client.js";
-import { SlashCommand } from "../../structures/SlashCommand.js";
+import {
+    Bot
+} from "../../structures/Client.js";
+import {
+    SlashCommand
+} from "../../structures/SlashCommand.js";
 
 export default class Ping extends SlashCommand {
     constructor(public client: Bot) {

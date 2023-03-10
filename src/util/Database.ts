@@ -15,12 +15,16 @@ import {
     TaskTypes,
 } from '../types.js'
 import {
-    Member,
     type Guild,
     type User,
+    Member
 } from 'eris'
-import { CronJob } from 'cron'
-import { Bot } from '../structures/Client.js'
+import { 
+    CronJob 
+} from 'cron'
+import { 
+    Bot 
+} from '../structures/Client.js'
 
 
 

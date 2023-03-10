@@ -1,4 +1,6 @@
-import { readFile } from "fs/promises";
+import {
+    readFile
+} from "fs/promises";
 import {
     type Adventure,
     type Item

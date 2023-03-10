@@ -7,7 +7,8 @@ import {
     type AdvancedMessageContent,
     type CommandInteraction,
     type MessageContent,
-    ComponentInteraction,
+    type ComponentInteraction,
+    type InteractionDataOptionWithValue,
 } from 'eris'
 import {
     ConvertedCommandOptions
@@ -19,7 +20,7 @@ export abstract class SlashCommand {
     slashCommandData: SlashCommandData;
     localData: SlashCommandLocalData;
 
-    handleCommandAutocomplete?(option: string, value: string): InteractionAutocompleteChoices[] | Promise<InteractionAutocompleteChoices[]>;
+    handleCommandAutocomplete?(option: string, value: string, otherOptions?: { [key: string]: InteractionDataOptionWithValue }): InteractionAutocompleteChoices[] | Promise<InteractionAutocompleteChoices[]>;
     handleMessageComponent?(interaction: ComponentInteraction): void;
 
     constructor({

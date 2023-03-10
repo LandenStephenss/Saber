@@ -1,4 +1,6 @@
-import { Event } from "../structures/Event.js";
+import { 
+    Event 
+} from "../structures/Event.js";
 import {
     type SlashCommandData,
 } from '../types.js';

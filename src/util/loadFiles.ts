@@ -1,4 +1,6 @@
-import { readdir } from 'fs/promises';
+import { 
+    readdir 
+} from 'fs/promises';
 
 export const loadFiles = async <T>(path: string): Promise<T[]> => {
     const files = await readdir(new URL(path, import.meta.url), {

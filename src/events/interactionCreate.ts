@@ -1,4 +1,6 @@
-import { Event } from "../structures/Event.js";
+import {
+    Event
+} from "../structures/Event.js";
 import {
     type PingInteraction,
     type UnknownInteraction,
@@ -7,11 +9,11 @@ import {
     type AutocompleteInteraction,
     type User,
     type GuildTextableChannel,
-    AdvancedMessageContent,
-    InteractionDataOptionsWithValue
+    type AdvancedMessageContent,
+    type InteractionDataOptionsWithValue
 } from 'eris'
 import {
-    InteractionAutocompleteChoices,
+    type InteractionAutocompleteChoices,
     SlashCommandOptionTypes
 } from "../types.js";
 import {
@@ -61,23 +63,35 @@ export default class InteractionCreate extends Event {
             case InteractionTypes.APPLICATION_COMMAND_AUTOCOMPLETE:
                 this.handleAutocomplete(interaction as AutocompleteInteraction<GuildTextableChannel>)
                 break;
+            case InteractionTypes.MODAL_SUBMIT:
+                console.log('Modal submit interaction is not yet supported.');
+                break;
         }
     }
 
     async handleAutocomplete(interaction: AutocompleteInteraction<GuildTextableChannel>) {
         try {
             const Command = this.client.localCommands.get(interaction.data.name);
-            console.log(Command);
             if (!Command || !Command.handleCommandAutocomplete) {
                 console.error('Could not handle autocomplete properly, ' + interaction.data.name);
                 return;
             }
             // @ts-expect-error
             const FocusedOption: InteractionDataOptionsWithValue = interaction.data.options.find((opt) => opt.focused)
+            const OtherOptions: {
+                [key: string]: InteractionDataOptionsWithValue
+            } = {};
+            for (const Option of interaction.data.options as InteractionDataOptionsWithValue[]) {
+                if (Option.focused) {
+                    continue;
+                }
+
+                OtherOptions[Option.name] = Option
+            }
             if (!FocusedOption) {
                 throw new Error('Autocomplete interaction does not have focused option');
             }
-            const Result: InteractionAutocompleteChoices[] = await Command.handleCommandAutocomplete(FocusedOption.name, FocusedOption.value as string)
+            const Result: InteractionAutocompleteChoices[] = await Command.handleCommandAutocomplete(FocusedOption.name, FocusedOption.value as string, OtherOptions)
             interaction.acknowledge(Result);
 
         } catch (e) {
