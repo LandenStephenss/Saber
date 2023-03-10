@@ -1,5 +1,5 @@
-import type { 
-    ObjectId 
+import type {
+    ObjectId
 } from "mongodb";
 
 export type Item = AttackItem | PotionItem | ShieldItem | ArmorItem;
@@ -70,20 +70,33 @@ export type ArmorItem = {
 export type Adventure = {
     // Display name of the adventure;
     name: string;
-    // Enemies on the adventure;
-    enemies: Enemey[];
-    // Maximum amount of gold a player can recieve.
-    maxGold: number;
-    // Minimum amount of gold a player can recieve.
-    minGold: number;
-    // Maximum amount of experience a player can recieve.
-    maxExperience: number;
-    // Minimum amount of experience a player can recieve.
-    minExperience: number;
-    // The possible rewards a user can recieve for completing the adventure.
-    possibleCompletionRewards: Item[];
-    // Possible failure rewards, given to users so they're not left with nothing; Could also be mixed with completion rewards if completed.
-    possibleRewards: Item[];
+    // Enemies on the adventure -- Will only be null if the enemey could not be resolved.
+    enemies: (Enemey | null)[];
+
+    // If requirments is not defined then there are none.
+    requirments?: {
+        // Minimum amount of XP a user needs to be allowed to play.
+        minXP: number;
+        // Maximum XP a user can have to be allowed to play.
+        maxXP: number;
+        // If it costs the user to start the adventure or not.
+        cost: number;
+    }
+
+    rewards: {
+        // Maximum amount of gold a player can recieve.
+        maxGold: number;
+        // Minimum amount of gold a player can recieve.
+        minGold: number;
+        // Maximum amount of experience a player can recieve.
+        maxExperience: number;
+        // Minimum amount of experience a player can recieve.
+        minExperience: number;
+        // The possible rewards a user can recieve for completing the adventure.
+        possibleCompletionRewards: Item[];
+        // Possible failure rewards, given to users so they're not left with nothing; Could also be mixed with completion rewards if completed.
+        possibleRewards: Item[];
+    }
 
 }
 
@@ -212,7 +225,7 @@ export enum MessageComponentTypes {
 
 export enum MessageComponentButtonStyles {
     PRIMARY = 1, // blurple
-    SECONDARY =  2, // gray
+    SECONDARY = 2, // gray
     SUCCESS = 3, // green
     DANGER = 4, // red
     LINK = 5, // grey, navigates to url
