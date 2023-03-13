@@ -10,7 +10,10 @@ import {
     type User,
     type GuildTextableChannel,
     type AdvancedMessageContent,
-    type InteractionDataOptionsWithValue
+    type InteractionDataOptionsWithValue,
+    type InteractionDataOptions,
+    InteractionDataOptionWithValue,
+    InteractionDataOptionsSubCommand
 } from 'eris'
 import {
     type InteractionAutocompleteChoices,
@@ -22,10 +25,13 @@ import {
 
 export type ConvertedCommandOptions = {
     [key: string]: {
-        value: unknown;
         type: SlashCommandOptionTypes,
+        value?: unknown;
         // Used for user type;
         user?: User
+        // Used for sub commands;
+        options?: ConvertedCommandOptions
+        isSubCommand?: boolean;
     }
 }
 
@@ -69,6 +75,20 @@ export default class InteractionCreate extends Event {
         }
     }
 
+    private findFocusedAutocompleteOption(options: InteractionDataOptions[] = []): any {
+        for (const option of options) {
+            if ((option as InteractionDataOptionWithValue).focused) {
+                return option;
+            }
+
+            if ((option as InteractionDataOptionsSubCommand).options) {
+                return this.findFocusedAutocompleteOption((option as InteractionDataOptionsSubCommand).options);
+            };
+        }
+
+        throw new Error('An unexpected error has occured');
+    }
+
     async handleAutocomplete(interaction: AutocompleteInteraction<GuildTextableChannel>) {
         try {
             const Command = this.client.localCommands.get(interaction.data.name);
@@ -76,18 +96,18 @@ export default class InteractionCreate extends Event {
                 console.error('Could not handle autocomplete properly, ' + interaction.data.name);
                 return;
             }
-            // @ts-expect-error
-            const FocusedOption: InteractionDataOptionsWithValue = interaction.data.options.find((opt) => opt.focused)
+            const FocusedOption: InteractionDataOptionsWithValue = this.findFocusedAutocompleteOption(interaction.data.options);
             const OtherOptions: {
-                [key: string]: InteractionDataOptionsWithValue
+                [key: string]: InteractionDataOptions
             } = {};
-            for (const Option of interaction.data.options as InteractionDataOptionsWithValue[]) {
-                if (Option.focused) {
+            for (const Option of interaction.data.options as InteractionDataOptions[]) {
+                if ((Option as InteractionDataOptionWithValue).focused) {
                     continue;
                 }
 
                 OtherOptions[Option.name] = Option
             }
+
             if (!FocusedOption) {
                 throw new Error('Autocomplete interaction does not have focused option');
             }
@@ -121,6 +141,7 @@ export default class InteractionCreate extends Event {
     }
 
     async handleMessageComponent(interaction: ComponentInteraction) {
+
         try {
             await interaction.acknowledge();
 
@@ -166,52 +187,31 @@ export default class InteractionCreate extends Event {
 
             let options: ConvertedCommandOptions = {};
             if (interaction.data.options) {
-                for (const option of interaction.data.options) {
-                    switch (option.type) {
-                        case SlashCommandOptionTypes.USER:
-                            const UserID = (option as any).value;
-                            const User = this.client.resolveUser(UserID);
-
-                            // there should never be a user that the bot doesn't have.
-                            if (!User) {
-                                throw new Error('User cannot be found.')
-                            }
-
-                            options[option.name] = {
-                                value: (option as any).value,
-                                type: option.type,
-                                user: User
-                            }
-                            break;
-                        default:
-                            options[option.name] = {
-                                value: (option as any).value,
-                                type: option.type as any
-                            }
-                            break;
-                    }
-                }
+                options = this.parseInteractionOptions(interaction.data.options)
             }
 
             let CommandResult = await Command.run(interaction, options);
-            if (typeof CommandResult === 'object' && CommandResult?.embeds) {
-                for (const [index, embed] of CommandResult.embeds.entries()) {
-                    if (!embed?.color) {
-                        CommandResult.embeds[index].color = 12473343
+            if (CommandResult) {
+                // todo; probably append the user id to all custom_id here, so that code doesn't look ugly.
+                if (typeof CommandResult === 'object' && CommandResult?.embeds) {
+                    for (const [index, embed] of CommandResult.embeds.entries()) {
+                        if (!embed?.color) {
+                            CommandResult.embeds[index].color = 12473343
+                        }
                     }
                 }
+                if (typeof CommandResult === 'object' && CommandResult.embed && !CommandResult.embed?.color) CommandResult.embed.color = 12473343
+
+                interaction.createFollowup(CommandResult);
+
+                // Add the user's cooldown;
+                if (!commandCooldowns) {
+                    commandCooldowns = {};
+                }
+                commandCooldowns[interaction.data.name] = Date.now() + Command.localData.cooldown;
+
+                this.client.database.editUser(interaction.member, { commandCooldowns })
             }
-            if (typeof CommandResult === 'object' && CommandResult.embed && !CommandResult.embed?.color) CommandResult.embed.color = 12473343
-
-            interaction.createFollowup(CommandResult);
-
-            // Add the user's cooldown;
-            if (!commandCooldowns) {
-                commandCooldowns = {};
-            }
-            commandCooldowns[interaction.data.name] = Date.now() + Command.localData.cooldown;
-
-            this.client.database.editUser(interaction.member, { commandCooldowns })
         } catch (err) {
             if (!interaction.acknowledged) {
                 await interaction.acknowledge(64);
@@ -220,5 +220,74 @@ export default class InteractionCreate extends Event {
             await interaction.createFollowup(this.createErrorMessage(err, config.developers.includes(interaction.member!.id)));
             throw new Error('Could not handle command');
         }
+    }
+
+    private parseInteractionOptions(options: InteractionDataOptions[]): ConvertedCommandOptions {
+        let ConvertedOptions: ConvertedCommandOptions = {}
+        for (const option of options) {
+            switch (option.type) {
+                case SlashCommandOptionTypes.SUB_COMMAND:
+                    ConvertedOptions[option.name] = {
+                        type: option.type,
+                        options: this.parseInteractionOptions(option.options ?? []),
+                        isSubCommand: true
+                    }
+                    break;
+                case SlashCommandOptionTypes.SUB_COMMAND_GROUP:
+                    throw new Error('Sub command group type has not been handled properly yet.')
+                    break;
+                case SlashCommandOptionTypes.STRING:
+                    ConvertedOptions[option.name] = {
+                        type: option.type,
+                        value: option.value as string
+                    }
+                    break;
+                case SlashCommandOptionTypes.INTEGER:
+                    ConvertedOptions[option.name] = {
+                        type: option.type,
+                        value: option.value as number
+                    }
+                    break;
+                case SlashCommandOptionTypes.BOOLEAN:
+                    ConvertedOptions[option.name] = {
+                        type: option.type,
+                        value: option.value as boolean
+                    }
+                    break;
+                case SlashCommandOptionTypes.USER:
+                    const User = this.client.resolveUser(option.value);
+                    if (!User) {
+                        throw new Error('User could not be found.');
+                    }
+                    ConvertedOptions[option.name] = {
+                        value: option.value,
+                        type: option.type,
+                        user: User
+                    }
+                    break;
+                case SlashCommandOptionTypes.CHANNEL:
+                    throw new Error('Channel type has not been handled properly yet.')
+                    break;
+                case SlashCommandOptionTypes.ROLE:
+                    throw new Error('Role type has not been handled properly yet.')
+                    break;
+                case SlashCommandOptionTypes.MENTIONABLE:
+
+                    break;
+                case SlashCommandOptionTypes.NUMBER:
+                    ConvertedOptions[option.name] = {
+                        type: option.type,
+                        value: option.value as number
+                    }
+                    break;
+                // @ts-expect-error dum eris
+                case SlashCommandOptionTypes.ATTACHMENT:
+                    break;
+                default:
+                    throw new Error('Slash command option type is not yet supported.')
+            }
+        };
+
+        return ConvertedOptions;
     }
 }

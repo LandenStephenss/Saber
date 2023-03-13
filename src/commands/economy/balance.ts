@@ -21,7 +21,6 @@ export default class Ping extends SlashCommand {
             name: 'balance',
             description: 'See how much gold you have.',
             category: 'economy',
-            ephemeral: true,
             options: [
                 {
                     type: SlashCommandOptionTypes.USER,

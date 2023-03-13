@@ -2,7 +2,8 @@ import {
     type Collection,
     type DeleteResult,
     MongoClient,
-    ObjectId
+    ObjectId,
+    UpdateFilter
 } from 'mongodb';
 import {
     config
@@ -19,11 +20,11 @@ import {
     type User,
     Member
 } from 'eris'
-import { 
-    CronJob 
+import {
+    CronJob
 } from 'cron'
-import { 
-    Bot 
+import {
+    Bot
 } from '../structures/Client.js'
 
 
@@ -32,10 +33,7 @@ import {
 export class DatabaseUser {
     gold = config.settings.economy.defaultGold;
     experience = 0;
-
-    adventures = {
-        isCurrentlyAdventuring: false,
-    }
+    level = 0;
 
     constructor(public _id: string) { }
 }
@@ -96,7 +94,6 @@ export class Database {
 
         try {
             await this.users.insertOne(NewUser);
-            // todo; event emitter whenever user is created for logging purposes.
             return NewUser;
         } catch (e) {
             throw new Error('Could not create the user. ' + e)
@@ -125,7 +122,7 @@ export class Database {
      * @param {Partial<DatabaseUserType>} changes Changes you want to make to the user.
      * @returns {Promise<DatabaseUserType>}
      */
-    async editUser(user: User | Member, changes: Partial<DatabaseUserType>): Promise<DatabaseUserType> {
+    async editUser(user: User | Member, changes: UpdateFilter<DatabaseUserType> | Partial<DatabaseUser>): Promise<DatabaseUserType> {
         try {
             await this.ensureUser(user);
             await this.users.updateOne(

@@ -86,7 +86,7 @@ export default class Help extends SlashCommand {
 
     private createCommandEmbed(query: string = 'help'): AdvancedMessageContent {
         try {
-            const Command = this.client.localCommands.get(query);
+            const Command = this.client.localCommands.get(query.toLowerCase());
             if (!Command) {
                 throw new Error('Command does not exist');
             }
@@ -194,13 +194,12 @@ export default class Help extends SlashCommand {
     };
 
     run(_: CommandInteraction<GuildTextableChannel>, options: ConvertedCommandOptions) {
-        // const action = this.client.awaitComponentInteraction(this.handleComponentInteraction);
         try {
             if (options.command) {
                 return this.createCommandEmbed(options.command.value as string);
-            } else {
-                return this.createBulkEmbed();
             }
+            return this.createBulkEmbed();
+
         } catch (e: any) {
             throw new Error(e);
         }

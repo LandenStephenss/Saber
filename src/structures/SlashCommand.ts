@@ -1,4 +1,3 @@
-// TODO;
 import {
     type Bot
 } from './Client.js'
@@ -8,7 +7,7 @@ import {
     type CommandInteraction,
     type MessageContent,
     type ComponentInteraction,
-    type InteractionDataOptionWithValue,
+    type InteractionDataOptions,
 } from 'eris'
 import {
     ConvertedCommandOptions
@@ -20,7 +19,7 @@ export abstract class SlashCommand {
     slashCommandData: SlashCommandData;
     localData: SlashCommandLocalData;
 
-    handleCommandAutocomplete?(option: string, value: string, otherOptions?: { [key: string]: InteractionDataOptionWithValue }): InteractionAutocompleteChoices[] | Promise<InteractionAutocompleteChoices[]>;
+    handleCommandAutocomplete?(option: string, value: string, otherOptions?: { [key: string]: InteractionDataOptions }): InteractionAutocompleteChoices[] | Promise<InteractionAutocompleteChoices[]>;
     handleMessageComponent?(interaction: ComponentInteraction): void;
 
     constructor({

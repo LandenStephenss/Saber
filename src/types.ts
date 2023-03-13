@@ -64,23 +64,35 @@ export enum ArmorTypes {
 }
 
 export type ArmorItem = {
-    type: ArmorTypes
+    type: ArmorTypes;
+    health: number;
 } & BaseItem;
 
 export type Adventure = {
     // Display name of the adventure;
     name: string;
+    description: string;
+    // Different artwork the adventure may contain;
+    art?: {
+        emoji?: {
+            id?: string;
+            unicode?: string;
+            name?: string;
+        }
+        icon?: unknown;
+        thumbnail?: unknown;
+    };
     // Enemies on the adventure -- Will only be null if the enemey could not be resolved.
-    enemies: (Enemey | null)[];
+    enemies: Enemey[];
 
     // If requirments is not defined then there are none.
     requirments?: {
         // Minimum amount of XP a user needs to be allowed to play.
-        minXP: number;
+        minXP?: number;
         // Maximum XP a user can have to be allowed to play.
-        maxXP: number;
+        maxXP?: number;
         // If it costs the user to start the adventure or not.
-        cost: number;
+        cost?: number;
     }
 
     rewards: {
@@ -114,10 +126,11 @@ export type DatabaseUserType = {
     _id: string;
     gold: number;
     experience: number;
+    level: number;
     // Command cooldowns
     commandCooldowns?: { [key: string]: number }
     // Adventure related things;
-    adventures: {
+    adventures?: {
         inventory?: {
             equiped: {
                 // A user can bring up to 2 attack items.
@@ -131,9 +144,14 @@ export type DatabaseUserType = {
             };
             other: Item[];
         };
-        isCurrentlyAdventuring: boolean;
-        // Will only show up whenever the user has an adventure going.
-        adventureId?: string;
+        currentAdventure?: {
+            name: string;
+            currentEnemey: {
+                currentHealth: number,
+                currentWeaponHealth: number;
+                currentArmorHealth?: number;
+            } & Enemey,
+        }
         stats?: {
             totalAdventures: number;
             adventuresWon: number;
@@ -192,10 +210,14 @@ export enum TaskTypes {
     UNBAN = 1,
     UNMUTE = 2,
     // Other RPG event things here.
+
+    ADVENTURE_REMINDER = 3 // Remind a user that they have an on-going adventure after a couple hours of inactivity.
 }
 
+export type DatabaseTask = SimpleTask
+
 // Will be used for queued processes using a cron loop.
-export type DatabaseTask = {
+export type SimpleTask = {
     // Same id as the mod log ticket that was created.
     _id: ObjectId;
     // If the task was edited, then it will be shown.
@@ -211,6 +233,11 @@ export type DatabaseTask = {
     // Guild that it needs to happen in.
     guild: string
 }
+
+export type ReminderTask = {
+    type: TaskTypes.ADVENTURE_REMINDER,
+
+} & SimpleTask
 
 export enum MessageComponentTypes {
     ACTION_ROW = 1,
@@ -235,7 +262,7 @@ export type SlashCommandData = {
     name: string;
     description: string;
     options?: CommandOption[];
-    default_member_permissions?: string | undefined;
+    default_member_permissions?: number | undefined;
     dm_permission: boolean;
     nsfw?: boolean;
 }
@@ -282,7 +309,7 @@ export type SlashCommandConstructor = {
     description_localizations?: DiscordLocals
     options?: CommandOption[],
     nsfw?: boolean;
-    defaultMemberPermissions?: string;
+    defaultMemberPermissions?: number;
     // Local things;
     category?: string;
     cooldown?: number;

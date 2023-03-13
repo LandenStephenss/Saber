@@ -1,6 +1,6 @@
 import {
     AttackItemTypes,
-    Enemey,
+    type Enemey,
     type Item,
     type Adventure
 } from './types.js';
@@ -31,14 +31,22 @@ const AllEnemies: Enemey[] = [
     }
 ]
 
-function resolveEnemey(filter: (enemey: Enemey) => boolean): Enemey | null {
+export function resolveAdventure(filter: (adventure: Adventure) => boolean): Adventure | void {
+    for (const Adventure of Adventures) {
+        if (filter(Adventure)) {
+            return Adventure;
+        }
+    }
+}
+
+export function resolveEnemey(filter: (enemey: Enemey) => boolean): Enemey {
     for (const Enemey of AllEnemies) {
         if (filter(Enemey)) {
             return Enemey;
         }
     }
 
-    return null;
+    throw new Error(`Enemey does not exist. ${filter.toString()}`);
 }
 
 
@@ -48,10 +56,19 @@ Items = [...Items, ...AllEnemies.filter(({ isItemDroppable }) => isItemDroppable
 export const Adventures: Adventure[] = [
     {
         name: 'Through the woods',
+        description: 'A short journey through the woods, just you and your sword.',
+        art: {
+            emoji: {
+                unicode: '🌲'
+            }
+        },
         enemies: [
             resolveEnemey(({ name }) => name === 'Mushroom Pawn'),
             resolveEnemey(({ name }) => name === 'Forest King')
         ],
+        requirments: {
+            maxXP: 100
+        },
         rewards: {
             maxGold: 10,
             minGold: 0,
