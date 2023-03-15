@@ -1,6 +1,4 @@
-import type {
-    ObjectId
-} from "mongodb";
+import type { ObjectId } from 'mongodb';
 
 export type Item = AttackItem | PotionItem | ShieldItem | ArmorItem;
 
@@ -11,7 +9,7 @@ export enum AttackItemTypes {
     SHORT_SWORD = 4,
     DAGGER = 5,
     // Bow does not have limited amount of arrows
-    BOW = 6
+    BOW = 6,
 }
 
 export type BaseItem = {
@@ -19,7 +17,7 @@ export type BaseItem = {
     // Price in the store will fluctuate - Not all items are available;
     minPrice?: number;
     maxPrice?: number;
-}
+};
 
 // Crit booster of attack items is 10%
 export type AttackItem = {
@@ -33,11 +31,11 @@ export enum PotionItemTypes {
     HEALING = 1,
     DAMAGE = 2,
     // Slow potion will stun the enemy making them unable to attack for a short time.
-    SLOW = 3
+    SLOW = 3,
 }
 
 export type PotionItem = {
-    type: PotionItemTypes,
+    type: PotionItemTypes;
 
     // Amount of healing that needs to be given;
     heal: number;
@@ -49,7 +47,7 @@ export type PotionItem = {
      * Level 2: Slowed for 2 moves;
      * Level 3: Slowed for 3 moves;
      */
-    slowness: 1 | 2 | 3
+    slowness: 1 | 2 | 3;
 } & BaseItem;
 
 export type ShieldItem = {
@@ -78,7 +76,7 @@ export type Adventure = {
             id?: string;
             unicode?: string;
             name?: string;
-        }
+        };
         icon?: unknown;
         thumbnail?: unknown;
     };
@@ -93,7 +91,7 @@ export type Adventure = {
         maxXP?: number;
         // If it costs the user to start the adventure or not.
         cost?: number;
-    }
+    };
 
     rewards: {
         // Maximum amount of gold a player can recieve.
@@ -108,9 +106,8 @@ export type Adventure = {
         possibleCompletionRewards: Item[];
         // Possible failure rewards, given to users so they're not left with nothing; Could also be mixed with completion rewards if completed.
         possibleRewards: Item[];
-    }
-
-}
+    };
+};
 
 export type Enemey = {
     health: number;
@@ -120,7 +117,7 @@ export type Enemey = {
     // Items are obtainable upon completion.
     isItemDroppable?: boolean;
     armor?: ArmorItem;
-}
+};
 
 export type DatabaseUserType = {
     _id: string;
@@ -128,35 +125,45 @@ export type DatabaseUserType = {
     experience: number;
     level: number;
     // Command cooldowns
-    commandCooldowns?: { [key: string]: number }
+    commandCooldowns?: { [key: string]: number };
     // Adventure related things;
     adventures?: {
         inventory?: {
             equiped: {
                 // A user can bring up to 2 attack items.
-                attack: AttackItem[],
+                attack: AttackItem[];
                 // A user can bring multiple potions
-                potion: PotionItem[],
+                potion: PotionItem[];
                 // A user can only have one shield
-                sheild: ShieldItem,
+                sheild: ShieldItem;
                 // A user can have a full set of armor.
-                armor: ArmorItem[]
+                armor: ArmorItem[];
             };
             other: Item[];
         };
         currentAdventure?: {
             name: string;
+            equiped: {
+                item: Item;
+                // Armor is not required because not all players will have armor.
+                armor?: {
+                    helmet?: ArmorItem & { type: ArmorTypes.HELMET };
+                    chestplate?: ArmorItem & { type: ArmorTypes.CHESTPLATE };
+                    pants?: ArmorItem & { type: ArmorTypes.PANTS };
+                    boots?: ArmorItem & { type: ArmorTypes.BOOTS };
+                };
+            };
             currentEnemey: {
-                currentHealth: number,
+                currentHealth: number;
                 currentWeaponHealth: number;
                 currentArmorHealth?: number;
-            } & Enemey,
-        }
+            } & Enemey;
+        };
         stats?: {
             totalAdventures: number;
             adventuresWon: number;
-        }
-    }
+        };
+    };
 
     // Discord user id.
     marriedTo?: string;
@@ -165,25 +172,25 @@ export type DatabaseUserType = {
 export type DatabaseGuildType = {
     _id: string;
     // Contains all modlog entries for the guild.
-    modlog: ModLogEntry[]
+    modlog: ModLogEntry[];
 
     // Moderation settings -- todo; automod;
     moderation: {
         roles: {
-            muted: string | null
-        }
-    }
+            muted: string | null;
+        };
+    };
 };
 
 export type ModLogEntry = {
     // Random object id that will be displayed on the ticket.
     _id: ObjectId;
-    type: ModLogTypes
+    type: ModLogTypes;
     createdAt: Date;
     // Shouldn't be on anything that doesn't have a task assigned to.
     endsAt?: Date;
     ticketNumber: number;
-}
+};
 
 export enum ModLogTypes {
     // Mute a user.
@@ -211,10 +218,10 @@ export enum TaskTypes {
     UNMUTE = 2,
     // Other RPG event things here.
 
-    ADVENTURE_REMINDER = 3 // Remind a user that they have an on-going adventure after a couple hours of inactivity.
+    ADVENTURE_REMINDER = 3, // Remind a user that they have an on-going adventure after a couple hours of inactivity.
 }
 
-export type DatabaseTask = SimpleTask
+export type DatabaseTask = SimpleTask;
 
 // Will be used for queued processes using a cron loop.
 export type SimpleTask = {
@@ -227,17 +234,16 @@ export type SimpleTask = {
     // Whenever the task ends.
     endsAt: Date;
     // Task type
-    type: TaskTypes,
+    type: TaskTypes;
     // User id with whom the task is assigned to.
-    user: string,
+    user: string;
     // Guild that it needs to happen in.
-    guild: string
-}
+    guild: string;
+};
 
 export type ReminderTask = {
-    type: TaskTypes.ADVENTURE_REMINDER,
-
-} & SimpleTask
+    type: TaskTypes.ADVENTURE_REMINDER;
+} & SimpleTask;
 
 export enum MessageComponentTypes {
     ACTION_ROW = 1,
@@ -247,7 +253,7 @@ export enum MessageComponentTypes {
     USER_SELECT = 5,
     ROLE_SELECT = 6,
     MENTIONABLE_SELECT = 7,
-    CHANNEL_SELECT = 8
+    CHANNEL_SELECT = 8,
 }
 
 export enum MessageComponentButtonStyles {
@@ -265,65 +271,64 @@ export type SlashCommandData = {
     default_member_permissions?: number | undefined;
     dm_permission: boolean;
     nsfw?: boolean;
-}
+};
 
 type DiscordLocals = {
-    id?: string // Indonesian
-    da?: string	// Danish
-    de?: string	// German
-    fr?: string // French	
-    hr?: string // Croatian	
-    it?: string // Italian	
-    lt?: string // Lithuanian	
-    hu?: string // Hungarian	
-    nl?: string // Dutch	
-    no?: string // Norwegian	
-    pl?: string // Polish	
-    vi?: string // Vietnamese	
-    tr?: string // Turkish	
-    cs?: string // Czech	
-    el?: string // Greek	
-    bg?: string // Bulgarian	
-    ru?: string // Russian	
-    uk?: string // Ukrainian	
-    hi?: string // Hindi	
-    th?: string // Thai	
-    ro?: string // Romanian, Romania
-    fi?: string // Finnish	
-    ko?: string // Korean
-    ja?: string // Japanese	
-    "en-GB"?: string // English, UK
-    "en-US"?: string // English, US
-    "es-ES"?: string // Spanish
-    "zh-CN"?: string //	Chinese, China
-    "zh-TW"?: string // Chinese, Taiwan
-    "pt-BR"?: string // Portuguese, Brazilian
-    "sv-SE"?: string // Swedish	
-}
+    id?: string; // Indonesian
+    da?: string; // Danish
+    de?: string; // German
+    fr?: string; // French
+    hr?: string; // Croatian
+    it?: string; // Italian
+    lt?: string; // Lithuanian
+    hu?: string; // Hungarian
+    nl?: string; // Dutch
+    no?: string; // Norwegian
+    pl?: string; // Polish
+    vi?: string; // Vietnamese
+    tr?: string; // Turkish
+    cs?: string; // Czech
+    el?: string; // Greek
+    bg?: string; // Bulgarian
+    ru?: string; // Russian
+    uk?: string; // Ukrainian
+    hi?: string; // Hindi
+    th?: string; // Thai
+    ro?: string; // Romanian, Romania
+    fi?: string; // Finnish
+    ko?: string; // Korean
+    ja?: string; // Japanese
+    'en-GB'?: string; // English, UK
+    'en-US'?: string; // English, US
+    'es-ES'?: string; // Spanish
+    'zh-CN'?: string; //	Chinese, China
+    'zh-TW'?: string; // Chinese, Taiwan
+    'pt-BR'?: string; // Portuguese, Brazilian
+    'sv-SE'?: string; // Swedish
+};
 
 export type SlashCommandConstructor = {
     // Discord things
     name: string;
-    name_localizations?: DiscordLocals
+    name_localizations?: DiscordLocals;
     description: string;
-    description_localizations?: DiscordLocals
-    options?: CommandOption[],
+    description_localizations?: DiscordLocals;
+    options?: CommandOption[];
     nsfw?: boolean;
     defaultMemberPermissions?: number;
     // Local things;
     category?: string;
     cooldown?: number;
     ephemeral?: boolean;
-
-}
+};
 
 type BaseOption = {
     name: string;
-    name_localizations?: DiscordLocals
+    name_localizations?: DiscordLocals;
     description: string;
-    description_localizations?: DiscordLocals
+    description_localizations?: DiscordLocals;
     required?: boolean;
-}
+};
 
 export enum ChannelTypes {
     GUILD_TEXT = 0,
@@ -340,7 +345,8 @@ export enum ChannelTypes {
     GUILD_FORUM = 15,
 }
 
-export type CommandOption = SubCommandOption
+export type CommandOption =
+    | SubCommandOption
     | SubCommandGroupOption
     | StringOption
     | IntegerOption
@@ -355,7 +361,7 @@ export type CommandOption = SubCommandOption
 type CommandOptionChoice = {
     name: string;
     value: string;
-}
+};
 
 export enum SlashCommandOptionTypes {
     SUB_COMMAND = 1,
@@ -368,7 +374,7 @@ export enum SlashCommandOptionTypes {
     ROLE = 8,
     MENTIONABLE = 9,
     NUMBER = 10,
-    ATTACHMENT = 11
+    ATTACHMENT = 11,
 }
 
 export type SubCommandOption = {
@@ -383,7 +389,7 @@ export type StringOption = {
     type: SlashCommandOptionTypes.STRING;
     choices?: CommandOptionChoice[];
     min_length?: number; // Minimum of 1
-    max_length?: number // Maximum of 6000
+    max_length?: number; // Maximum of 6000
     autocomplete?: boolean;
 } & BaseOption;
 export type IntegerOption = {
@@ -392,10 +398,10 @@ export type IntegerOption = {
     min_value?: number;
     max_value?: number;
     autocomplete?: boolean;
-} & BaseOption
+} & BaseOption;
 export type BooleanOption = {
     type: SlashCommandOptionTypes.BOOLEAN;
-} & BaseOption
+} & BaseOption;
 export type UserOption = {
     type: SlashCommandOptionTypes.USER;
 } & BaseOption;
@@ -424,15 +430,9 @@ export type SlashCommandLocalData = {
     category: string;
     cooldown: number;
     ephemeral: boolean;
-}
-
-export type MessageComponentData = {
-    values: string[];
-    custom_id?: string;
-    component_type: number;
-}
+};
 
 export type InteractionAutocompleteChoices = {
     name: string;
     value: string;
-}
+};

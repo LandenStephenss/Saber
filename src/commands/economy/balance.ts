@@ -1,19 +1,8 @@
-import {
-    CommandInteraction,
-    User
-} from "eris";
-import {
-    type ConvertedCommandOptions
-} from "../../events/interactionCreate.js";
-import {
-    Bot
-} from "../../structures/Client.js";
-import {
-    SlashCommand
-} from "../../structures/SlashCommand.js";
-import {
-    SlashCommandOptionTypes
-} from "../../types.js";
+import { CommandInteraction, User } from 'eris';
+import { type ConvertedCommandOptions } from '../../events/interactionCreate.js';
+import { Bot } from '../../structures/Client.js';
+import { SlashCommand } from '../../structures/SlashCommand.js';
+import { SlashCommandOptionTypes } from '../../types.js';
 
 export default class Ping extends SlashCommand {
     constructor(public client: Bot) {
@@ -25,11 +14,11 @@ export default class Ping extends SlashCommand {
                 {
                     type: SlashCommandOptionTypes.USER,
                     name: 'user',
-                    description: 'User you\'d like to check',
-                    required: false
-                }
-            ]
-        })
+                    description: "User you'd like to check",
+                    required: false,
+                },
+            ],
+        });
     }
 
     async run(interaction: CommandInteraction, options: ConvertedCommandOptions) {
@@ -37,13 +26,17 @@ export default class Ping extends SlashCommand {
         if (options?.user) {
             ResolvedUser = this.client.resolveUser(options.user.value as string);
         }
-        const { gold } = await this.client.database.getUser(ResolvedUser ?? interaction.member!);
+        const { gold } = await this.client.database.getUser(
+            ResolvedUser ?? interaction.member!
+        );
 
         return {
             embed: {
-                title: `${options?.user?.user?.username ?? interaction.member?.username} has ${gold} gold!`
+                title: `${
+                    options?.user?.user?.username ?? interaction.member?.username
+                } has ${gold} gold!`,
             },
-            flags: 64
-        }
+            flags: 64,
+        };
     }
 }

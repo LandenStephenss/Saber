@@ -1,11 +1,12 @@
 # Saber
 
 ### Example Command Structure
+
 ```ts
 class Example extends SlashCommand {
     autocompleteIDs = {
-        bandKid: 'bandkid'
-    }
+        bandKid: 'bandkid',
+    };
     constructor(public client: Bot) {
         super({
             name: 'Example',
@@ -17,33 +18,32 @@ class Example extends SlashCommand {
                     required: true,
                     type: SlashCommandOptionTypes.STRING,
                     autocomplete: true,
-                }
+                },
             ],
             category: 'earth',
-            ephermal: true
-        })
+            ephermal: true,
+        });
     }
 
     handleAutocomplete(option: string, value: string) {
-        switch(option) {
+        switch (option) {
             case autocompleteIDs.bandKid:
                 console.log(option);
                 return [
                     {
                         name: 'yes',
-                        value: 'no'
-                    }
-                ] // the choices you return. I can't be bothered to come up with dummy code.
+                        value: 'no',
+                    },
+                ]; // the choices you return. I can't be bothered to come up with dummy code.
             default:
                 return [];
         }
     }
 
     // TODO;
-    handleMessageComponent() {};
+    handleMessageComponent() {}
 
     // TODO;
-    run() {};
+    run() {}
 }
-
 ```

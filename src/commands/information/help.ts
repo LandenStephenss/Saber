@@ -1,31 +1,26 @@
-import {
-    SlashCommand,
-} from "../../structures/SlashCommand.js";
-import {
-    type Bot
-} from "../../structures/Client.js";
+import { parsedCustomId, SlashCommand } from '../../structures/SlashCommand.js';
+import { type Bot } from '../../structures/Client.js';
 import {
     type ComponentInteraction,
     type CommandInteraction,
     type GuildTextableChannel,
     type AdvancedMessageContent,
     type ComponentInteractionSelectMenuData,
-} from "eris";
-import {
-    ConvertedCommandOptions
-} from "../../events/interactionCreate.js";
+    InteractionContentEdit,
+} from 'eris';
+import { ConvertedCommandOptions } from '../../events/interactionCreate.js';
 import {
     type InteractionAutocompleteChoices,
     MessageComponentButtonStyles,
     MessageComponentTypes,
-    SlashCommandOptionTypes
-} from '../../types.js'
+    SlashCommandOptionTypes,
+} from '../../types.js';
 
 export default class Help extends SlashCommand {
     customIDs = {
-        all: 'help-allcommands',
-        select: 'help-selectcommand'
-    }
+        all: 'allcommands',
+        select: 'selectcommand',
+    };
 
     constructor(public client: Bot) {
         super({
@@ -34,15 +29,15 @@ export default class Help extends SlashCommand {
             options: [
                 {
                     name: 'command',
-                    description: 'Command you\'d like information about',
+                    description: "Command you'd like information about",
                     required: false,
                     type: SlashCommandOptionTypes.STRING,
-                    autocomplete: true
-                }
+                    autocomplete: true,
+                },
             ],
             category: 'information',
-            ephemeral: true
-        })
+            ephemeral: true,
+        });
     }
 
     private searchCommands(query: string) {
@@ -50,37 +45,60 @@ export default class Help extends SlashCommand {
             return [...this.client.localCommands];
         }
 
-        return [...this.client.localCommands]
-            .filter(([, { slashCommandData: { name } }]) => name.includes(query.toLowerCase()))
+        return [...this.client.localCommands].filter(
+            ([
+                ,
+                {
+                    slashCommandData: { name },
+                },
+            ]) => name.includes(query.toLowerCase())
+        );
+    }
 
-
-    };
-
-    handleCommandAutocomplete(option: string, value: string, options: any): InteractionAutocompleteChoices[] | Promise<InteractionAutocompleteChoices[]> {
+    handleCommandAutocomplete(
+        option: string,
+        value: string,
+        options: any
+    ): InteractionAutocompleteChoices[] | Promise<InteractionAutocompleteChoices[]> {
         switch (option) {
             case 'command':
-                return this.searchCommands(value).map(([, { slashCommandData: { name } }]) => ({
-                    name: name,
-                    value: name
-                })).slice(0, 25);
+                return this.searchCommands(value)
+                    .map(
+                        ([
+                            ,
+                            {
+                                slashCommandData: { name },
+                            },
+                        ]) => ({
+                            name: name,
+                            value: name,
+                        })
+                    )
+                    .slice(0, 25);
 
             default:
                 return [];
         }
     }
 
-    async handleMessageComponent(interaction: ComponentInteraction<GuildTextableChannel>) {
-        switch (interaction.data.custom_id) {
+    handleMessageComponent(
+        interaction: ComponentInteraction<GuildTextableChannel>,
+        { id }: parsedCustomId
+    ): string | InteractionContentEdit | void {
+        console.log(interaction.data);
+        switch (id) {
             case this.customIDs.all:
-                interaction.editOriginalMessage(this.createBulkEmbed());
-                break;
+                return this.createBulkEmbed();
             case this.customIDs.select:
                 try {
-                    interaction.editOriginalMessage(this.createCommandEmbed((interaction.data as ComponentInteractionSelectMenuData).values[0]));
+                    return this.createCommandEmbed(
+                        (interaction.data as ComponentInteractionSelectMenuData).values[0]
+                    );
                 } catch (e) {
-                    interaction.createMessage(`Command \`${(interaction.data as ComponentInteractionSelectMenuData).values[0]}\` does not exist.`)
+                    return `Command \`${
+                        (interaction.data as ComponentInteractionSelectMenuData).values[0]
+                    }\` does not exist.`;
                 }
-                break;
         }
     }
 
@@ -94,14 +112,16 @@ export default class Help extends SlashCommand {
                 embeds: [
                     {
                         color: 12473343,
-                        title: Command.slashCommandData.name.split('')[0].toUpperCase() + Command.slashCommandData.name.split('').slice(1).join(''),
+                        title:
+                            Command.slashCommandData.name.split('')[0].toUpperCase() +
+                            Command.slashCommandData.name.split('').slice(1).join(''),
                         fields: [
                             {
                                 name: 'Description',
-                                value: Command.slashCommandData.description
-                            }
-                        ]
-                    }
+                                value: Command.slashCommandData.description,
+                            },
+                        ],
+                    },
                 ],
                 components: [
                     {
@@ -114,13 +134,13 @@ export default class Help extends SlashCommand {
                                 label: 'View All Commands',
                                 emoji: {
                                     id: null,
-                                    name: '📖'
-                                }
-                            }
-                        ]
-                    }
-                ]
-            }
+                                    name: '📖',
+                                },
+                            },
+                        ],
+                    },
+                ],
+            };
         } catch (e) {
             return {
                 embeds: [],
@@ -136,22 +156,27 @@ export default class Help extends SlashCommand {
                                 label: 'View All Commands',
                                 emoji: {
                                     id: null,
-                                    name: '📖'
-                                }
-                            }
-                        ]
-                    }
-                ]
-            }
+                                    name: '📖',
+                                },
+                            },
+                        ],
+                    },
+                ],
+            };
         }
-    };
+    }
 
     private createBulkEmbed(): AdvancedMessageContent {
-        const Fields: string[] = []
+        const Fields: string[] = [];
 
-        for (const [, { localData: { category } }] of this.client.localCommands) {
+        for (const [
+            ,
+            {
+                localData: { category },
+            },
+        ] of this.client.localCommands) {
             if (!Fields.includes(category)) {
-                Fields.push(category)
+                Fields.push(category);
             }
         }
 
@@ -161,13 +186,29 @@ export default class Help extends SlashCommand {
                     color: 12473343,
                     title: `${this.client.user.username}'s available commands!`,
                     fields: Fields.map((field) => ({
-                        name: `${field.split('')[0].toUpperCase() + field.split('').slice(1).join('')}`,
+                        name: `${
+                            field.split('')[0].toUpperCase() +
+                            field.split('').slice(1).join('')
+                        }`,
                         value: `\`${[...this.client.localCommands]
-                            .filter(([, { localData: { category } }]) => category === field)
-                            .map(([, { slashCommandData: { name } }]) => name)
-                            .join('`, `')
-                            }\``
-                    }))
+                            .filter(
+                                ([
+                                    ,
+                                    {
+                                        localData: { category },
+                                    },
+                                ]) => category === field
+                            )
+                            .map(
+                                ([
+                                    ,
+                                    {
+                                        slashCommandData: { name },
+                                    },
+                                ]) => name
+                            )
+                            .join('`, `')}\``,
+                    })),
                 },
             ],
             components: [
@@ -177,21 +218,26 @@ export default class Help extends SlashCommand {
                         {
                             type: MessageComponentTypes.STRING_SELECT,
                             custom_id: this.customIDs.select,
-                            options: [...this.client.localCommands]
-                                .map(([, { slashCommandData: {
-                                    name,
-                                    description
-                                } }]) => ({
-                                    label: name.split('')[0].toUpperCase() + name.split('').slice(1).join(''),
+                            options: [...this.client.localCommands].map(
+                                ([
+                                    ,
+                                    {
+                                        slashCommandData: { name, description },
+                                    },
+                                ]) => ({
+                                    label:
+                                        name.split('')[0].toUpperCase() +
+                                        name.split('').slice(1).join(''),
                                     value: name,
-                                    description: description
-                                }))
-                        }
-                    ]
-                }
-            ]
-        }
-    };
+                                    description: description,
+                                })
+                            ),
+                        },
+                    ],
+                },
+            ],
+        };
+    }
 
     run(_: CommandInteraction<GuildTextableChannel>, options: ConvertedCommandOptions) {
         try {
@@ -199,7 +245,6 @@ export default class Help extends SlashCommand {
                 return this.createCommandEmbed(options.command.value as string);
             }
             return this.createBulkEmbed();
-
         } catch (e: any) {
             throw new Error(e);
         }
