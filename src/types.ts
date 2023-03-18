@@ -268,7 +268,7 @@ export type SlashCommandData = {
     name: string;
     description: string;
     options?: CommandOption[];
-    default_member_permissions?: number | undefined;
+    default_member_permissions: number | undefined;
     dm_permission: boolean;
     nsfw?: boolean;
 };

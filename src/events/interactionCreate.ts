@@ -21,12 +21,17 @@ import { config } from '../config.js';
 
 export type ConvertedCommandOptions = {
     [key: string]: {
+        // Type of command option
         type: SlashCommandOptionTypes;
         value?: unknown;
         // Used for user type;
         user?: User;
         // Used for sub commands;
         options?: ConvertedCommandOptions;
+        /**
+         * This value is really just redundent. It's not used
+         * anywhere in the code yet exists for giggles.
+         */
         isSubCommand?: boolean;
     };
 };
@@ -49,6 +54,10 @@ enum InteractionTypes {
 export default class InteractionCreate extends Event {
     name = 'interactionCreate';
 
+    /**
+     * Handles the different types of possible interactions from Discord.
+     * @param {BulkInteraction} interaction Interaction provided from Discord.
+     */
     run(interaction: BulkInteraction) {
         try {
             switch (interaction.type) {
@@ -80,6 +89,11 @@ export default class InteractionCreate extends Event {
         }
     }
 
+    /**
+     * Finds which option is focused whenever typing a value into a command option.
+     * @param {InteractionDataOptions[]} options Options provided by the interaction.
+     * @returns {string} The name of the option that autocomplete is being used on.
+     */
     private findFocusedAutocompleteOption(options: InteractionDataOptions[] = []): any {
         for (const option of options) {
             if ((option as InteractionDataOptionWithValue).focused) {
@@ -96,7 +110,14 @@ export default class InteractionCreate extends Event {
         throw new Error('An unexpected error has occured');
     }
 
-    async handleAutocomplete(interaction: AutocompleteInteraction<GuildTextableChannel>) {
+    /**
+     * Ran whenever a user is attempting to use autocomplete from a
+     * slash command through Discord.
+     * @param {AutocompleteInteraction<GuildTextableChannel>} interaction
+     */
+    async handleAutocomplete(
+        interaction: AutocompleteInteraction<GuildTextableChannel>
+    ): Promise<void> {
         try {
             const Command = this.client.localCommands.get(interaction.data.name);
             if (!Command || !Command.handleCommandAutocomplete) {
@@ -133,7 +154,18 @@ export default class InteractionCreate extends Event {
         }
     }
 
-    createErrorMessage(error: any, isDeveloper: boolean = false): AdvancedMessageContent {
+    /**
+     * Creates a basic error message to relay to users whenever
+     * somethings goes wrong.
+     * @param {unknown} error The error message.
+     * @param {boolean} isDeveloper Whether the user is a developer or not
+     * developers will get the error included with the message.
+     * @returns {AdvancedMessageContent} A message object that can be sent to the user.
+     */
+    createErrorMessage(
+        error: unknown,
+        isDeveloper: boolean = false
+    ): AdvancedMessageContent {
         const Message: AdvancedMessageContent = {
             flags: 64,
             content: 'An unexpected error has occured',

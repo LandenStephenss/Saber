@@ -376,7 +376,10 @@ export default class Adventure extends SlashCommand {
         });
     }
 
-    // A prompt asking the user what they'd like to do.
+    /**
+     * A prompt asking the user what they'd like to do
+     * Whenever a user responds to this prompt, it will handle the enemey attack and then resend itself.
+     */
     sendAdventurePrompt() {}
 
     // handle user attack;
@@ -385,5 +388,6 @@ export default class Adventure extends SlashCommand {
     // handle user defend;
     handleDefend() {}
 
+    // hande user surrender;
     handleSurender() {}
 }

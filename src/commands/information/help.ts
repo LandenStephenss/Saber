@@ -1,3 +1,5 @@
+// todo; filter out commands (and empty category fields) that the user does not have permission to use.
+
 import { parsedCustomId, SlashCommand } from '../../structures/SlashCommand.js';
 import { type Bot } from '../../structures/Client.js';
 import {
@@ -7,6 +9,7 @@ import {
     type AdvancedMessageContent,
     type ComponentInteractionSelectMenuData,
     InteractionContentEdit,
+    Member,
 } from 'eris';
 import { ConvertedCommandOptions } from '../../events/interactionCreate.js';
 import {
@@ -88,7 +91,7 @@ export default class Help extends SlashCommand {
         console.log(interaction.data);
         switch (id) {
             case this.customIDs.all:
-                return this.createBulkEmbed();
+                return this.createBulkEmbed(interaction.member!);
             case this.customIDs.select:
                 try {
                     return this.createCommandEmbed(
@@ -166,7 +169,7 @@ export default class Help extends SlashCommand {
         }
     }
 
-    private createBulkEmbed(): AdvancedMessageContent {
+    private createBulkEmbed(member: Member): AdvancedMessageContent {
         const Fields: string[] = [];
 
         for (const [
@@ -190,14 +193,33 @@ export default class Help extends SlashCommand {
                             field.split('')[0].toUpperCase() +
                             field.split('').slice(1).join('')
                         }`,
-                        value: `\`${[...this.client.localCommands]
+                        value: [...this.client.localCommands]
                             .filter(
                                 ([
                                     ,
                                     {
+                                        slashCommandData: { default_member_permissions },
                                         localData: { category },
                                     },
-                                ]) => category === field
+                                ]) => {
+                                    /**
+                                     * Basically just says if default permissions exist on
+                                     * the command, then check if the user has the permission.
+                                     * If the default permissions are not on the command, then
+                                     * the user is allowed to use it regardless.
+                                     */
+                                    const userAllowed = default_member_permissions
+                                        ? member.permissions.has(
+                                              BigInt(default_member_permissions)
+                                          )
+                                        : true;
+
+                                    if (category === field && userAllowed) {
+                                        return true;
+                                    }
+
+                                    return false;
+                                }
                             )
                             .map(
                                 ([
@@ -205,9 +227,9 @@ export default class Help extends SlashCommand {
                                     {
                                         slashCommandData: { name },
                                     },
-                                ]) => name
+                                ]) => `\`${name}\`` // Mapping it like this eliminates the need to have it wrapped in a template string.
                             )
-                            .join('`, `')}\``,
+                            .join(', '),
                     })),
                 },
             ],
@@ -239,12 +261,15 @@ export default class Help extends SlashCommand {
         };
     }
 
-    run(_: CommandInteraction<GuildTextableChannel>, options: ConvertedCommandOptions) {
+    run(
+        interaction: CommandInteraction<GuildTextableChannel>,
+        options: ConvertedCommandOptions
+    ) {
         try {
             if (options.command) {
                 return this.createCommandEmbed(options.command.value as string);
             }
-            return this.createBulkEmbed();
+            return this.createBulkEmbed(interaction.member!);
         } catch (e: any) {
             throw new Error(e);
         }
