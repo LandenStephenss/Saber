@@ -1,11 +1,15 @@
 # Saber
 
+A multi-purpose Discord bot for the [VPSNode](http://vpsnode.org/) community.
+
+---
+
 ### Example Command Structure
 
 ```ts
 class Example extends SlashCommand {
     autocompleteIDs = {
-        bandKid: 'bandkid',
+        exampleId: 'exampleId',
     };
     constructor(public client: Bot) {
         super({
@@ -13,8 +17,8 @@ class Example extends SlashCommand {
             description: 'Shows idiots how to make a command properly',
             options: [
                 {
-                    name: 'tpose',
-                    description: 'Are you a band kid?',
+                    name: 'example-name',
+                    description: 'Are you an absolute troglodyte or what.',
                     required: true,
                     type: SlashCommandOptionTypes.STRING,
                     autocomplete: true,
@@ -27,14 +31,14 @@ class Example extends SlashCommand {
 
     handleAutocomplete(option: string, value: string) {
         switch (option) {
-            case autocompleteIDs.bandKid:
+            case autocompleteIDs.exampleId:
                 console.log(option);
                 return [
                     {
                         name: 'yes',
                         value: 'no',
                     },
-                ]; // the choices you return. I can't be bothered to come up with dummy code.
+                ];
             default:
                 return [];
         }

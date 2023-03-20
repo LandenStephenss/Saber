@@ -88,7 +88,6 @@ export default class Help extends SlashCommand {
         interaction: ComponentInteraction<GuildTextableChannel>,
         { id }: parsedCustomId
     ): string | InteractionContentEdit | void {
-        console.log(interaction.data);
         switch (id) {
             case this.customIDs.all:
                 return this.createBulkEmbed(interaction.member!);
@@ -201,25 +200,13 @@ export default class Help extends SlashCommand {
                                         slashCommandData: { default_member_permissions },
                                         localData: { category },
                                     },
-                                ]) => {
-                                    /**
-                                     * Basically just says if default permissions exist on
-                                     * the command, then check if the user has the permission.
-                                     * If the default permissions are not on the command, then
-                                     * the user is allowed to use it regardless.
-                                     */
-                                    const userAllowed = default_member_permissions
+                                ]) =>
+                                    category === field &&
+                                    (default_member_permissions
                                         ? member.permissions.has(
                                               BigInt(default_member_permissions)
                                           )
-                                        : true;
-
-                                    if (category === field && userAllowed) {
-                                        return true;
-                                    }
-
-                                    return false;
-                                }
+                                        : true)
                             )
                             .map(
                                 ([
@@ -230,7 +217,7 @@ export default class Help extends SlashCommand {
                                 ]) => `\`${name}\`` // Mapping it like this eliminates the need to have it wrapped in a template string.
                             )
                             .join(', '),
-                    })),
+                    })).filter((field) => field.value !== ''),
                 },
             ],
             components: [

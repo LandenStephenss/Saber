@@ -188,6 +188,12 @@ export default class InteractionCreate extends Event {
         try {
             await interaction.acknowledge();
 
+            // If it is a reaction role via the dropdown then it needs to be handled accordingly.
+            if (interaction.data.custom_id === 'selfAssignableRolesDropdown') {
+                console.log(interaction.data);
+                return;
+            }
+
             const ParsedCustomId = this.parseIncomingComponentCustomID(
                 interaction.data.custom_id
             );
@@ -216,12 +222,20 @@ export default class InteractionCreate extends Event {
             );
             if (!Result) return;
 
-            if (typeof Result === 'object' && Result.components) {
-                this.updateComponentsCustomID(
-                    Result.components,
-                    ParsedCustomId.command,
-                    interaction.member!.id
-                );
+            if (typeof Result === 'object') {
+                if (Result.components) {
+                    this.updateComponentsCustomID(
+                        Result.components,
+                        ParsedCustomId.command,
+                        interaction.member!.id
+                    );
+                }
+
+                if (Result.embeds) {
+                    for (const [index, embed] of Result.embeds.entries()) {
+                        if (!embed?.color) Result.embeds[index].color = 12473343;
+                    }
+                }
             }
 
             interaction.editOriginalMessage(Result);

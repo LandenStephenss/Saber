@@ -119,6 +119,11 @@ export type Enemey = {
     armor?: ArmorItem;
 };
 
+export type PlayerSkill = {
+    experience: number;
+    level: number;
+};
+
 export type DatabaseUserType = {
     _id: string;
     gold: number;
@@ -126,6 +131,12 @@ export type DatabaseUserType = {
     level: number;
     // Command cooldowns
     commandCooldowns?: { [key: string]: number };
+    // Different skills a player can have
+    skills?: {
+        mining?: PlayerSkill;
+        fishing?: PlayerSkill;
+        woodcutting?: PlayerSkill;
+    };
     // Adventure related things;
     adventures?: {
         inventory?: {

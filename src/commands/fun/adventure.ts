@@ -37,13 +37,13 @@ export default class Adventure extends SlashCommand {
                 {
                     type: SlashCommandOptionTypes.SUB_COMMAND,
                     name: 'view',
-                    description: 'View an adventure',
+                    description: 'View an adventure.',
                     options: [
                         {
                             type: SlashCommandOptionTypes.STRING,
                             name: 'adventure',
                             required: true,
-                            description: "Name of the adventure you'd like to view",
+                            description: "Name of the adventure you'd like to view.",
                             autocomplete: true,
                         },
                     ],
