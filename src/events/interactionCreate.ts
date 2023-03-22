@@ -12,12 +12,18 @@ import type {
     InteractionDataOptions,
     InteractionDataOptionWithValue,
     InteractionDataOptionsSubCommand,
+    ComponentInteractionSelectMenuData,
 } from 'eris';
 import {
     type InteractionAutocompleteChoices,
     SlashCommandOptionTypes,
 } from '../types.js';
 import { config } from '../config.js';
+
+enum RoleEditedType {
+    ADDED = 1,
+    REMOVED = 2,
+}
 
 export type ConvertedCommandOptions = {
     [key: string]: {
@@ -190,7 +196,91 @@ export default class InteractionCreate extends Event {
 
             // If it is a reaction role via the dropdown then it needs to be handled accordingly.
             if (interaction.data.custom_id === 'selfAssignableRolesDropdown') {
-                console.log(interaction.data);
+                const Guild = this.client.guilds.get(interaction.guildID!);
+                if (!Guild) {
+                    throw new Error('Could not get guild from interaction.');
+                }
+
+                const Roles = (
+                    interaction.data as ComponentInteractionSelectMenuData
+                ).values.map((roleID) => {
+                    const Role = Guild.roles.get(roleID);
+                    if (!Role) {
+                        interaction.createFollowup({
+                            flags: 64,
+                            content: `Role \`${roleID}\` does not exist, please contact a server administrator.`,
+                        });
+                        throw new Error('Could not find role ' + roleID);
+                    }
+                    return Role;
+                });
+
+                if (!interaction.member) {
+                    throw new Error('No member found, message was sent in DM.');
+                }
+
+                const RolesChanged: {
+                    roleID: string;
+                    action: RoleEditedType;
+                }[] = [];
+
+                for (const Role of Roles) {
+                    if (interaction.member.roles.includes(Role.id)) {
+                        interaction.member.removeRole(Role.id);
+                        RolesChanged.push({
+                            roleID: Role.id,
+                            action: RoleEditedType.REMOVED,
+                        });
+                    } else {
+                        interaction.member.addRole(Role.id);
+                        RolesChanged.push({
+                            roleID: Role.id,
+                            action: RoleEditedType.ADDED,
+                        });
+                    }
+                }
+
+                let FollowupMessage: AdvancedMessageContent = {
+                    flags: 64,
+                    embeds: [
+                        {
+                            title: 'Roles Changed',
+                            fields: [],
+                        },
+                    ],
+                };
+
+                // cancer af but it works might change later idk.
+
+                if (
+                    RolesChanged.filter(({ action }) => action === RoleEditedType.ADDED)
+                        .length > 0
+                ) {
+                    FollowupMessage.embeds![0].fields!.push({
+                        name: 'Roles Added',
+                        value: RolesChanged.filter(
+                            ({ action }) => action === RoleEditedType.ADDED
+                        )
+                            .map(({ roleID }) => `<@&${roleID}>`)
+                            .join(', '),
+                    });
+                }
+
+                if (
+                    RolesChanged.filter(({ action }) => action === RoleEditedType.REMOVED)
+                        .length > 0
+                ) {
+                    FollowupMessage.embeds![0].fields!.push({
+                        name: 'Roles Removed',
+                        value: RolesChanged.filter(
+                            ({ action }) => action === RoleEditedType.REMOVED
+                        )
+                            .map(({ roleID }) => `<@&${roleID}>`)
+                            .join(', '),
+                    });
+                }
+
+                interaction.createFollowup(FollowupMessage);
                 return;
             }
 

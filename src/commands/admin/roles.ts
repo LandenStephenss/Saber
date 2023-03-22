@@ -387,8 +387,7 @@ export default class Roles extends SlashCommand {
     }
 
     async handleMessageComponent(
-        interaction: ComponentInteraction<TextableChannel>,
-        parsedCustomId: { command: string; user: string; id: string }
+        interaction: ComponentInteraction<TextableChannel>
     ): Promise<string | void | InteractionContentEdit> {
         const {
             roleSelect,

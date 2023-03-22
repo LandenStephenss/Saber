@@ -4,6 +4,40 @@ A multi-purpose Discord bot for the [VPSNode](http://vpsnode.org/) community.
 
 ---
 
+## TO-DO List:
+
+-   [ ] Join/Leave messages.
+    -   [ ] Configurablity through admin commands.
+-   [ ] Role menu allowing users to select self-assignable roles.
+    -   [x] Admin setup command
+    -   [ ] Assigning users roles picked.
+-   [ ] Keyword GIF (Send a gif upon a keyword).
+    -   [ ] Setup using a command
+    -   [ ] Send a GIF when keyword is sent.
+-   [ ] Economy (**Gold Coins**)
+    -   [ ] Shop System
+    -   [ ] Trading with other users
+-   [ ] Skills
+    -   [ ] Chance to gain items whenever training skills.
+-   [ ] Marriage
+    -   [ ] Allow users to marry other users.
+    -   [ ] Marriage based events, children, child death, etc.
+-   [ ] Adventures
+    -   [ ] View a list of all adventures.
+    -   [x] Configure each adventure via the `adventures.ts` file.
+    -   [ ] Scale adventure/enemey difficulty with the users level.
+-   [x] Interaction Handling
+    -   [x] Commands
+        -   [x] Cooldowns
+    -   [x] Components
+        -   [x] Parse and update component `custom_id`'s when sending/recieving data.
+    -   [x] Autocomplete
+    -   [ ] Modal Submit
+-   [ ] Moderation Commands
+    -   [ ] Kick/(Soft)ban.
+    -   [ ] Mute.
+        -   [ ] Configurablity through admin commands (setting `mute` role).
+
 ### Example Command Structure
 
 ```ts
