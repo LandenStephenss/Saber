@@ -137,6 +137,12 @@ export type DatabaseUserType = {
         fishing?: PlayerSkill;
         woodcutting?: PlayerSkill;
     };
+    pingedGif?: {
+        url: string; // must be an Tenor URL (Tenor because that's what Discord uses).
+        updatedAt: Date;
+        lastSent?: number;
+    };
+
     // Adventure related things;
     adventures?: {
         inventory?: {

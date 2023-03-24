@@ -15,7 +15,6 @@ export default class Ping extends SlashCommand {
                     type: SlashCommandOptionTypes.USER,
                     name: 'user',
                     description: "User you'd like to check",
-                    required: false,
                 },
             ],
         });

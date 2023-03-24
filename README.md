@@ -8,9 +8,9 @@ A multi-purpose Discord bot for the [VPSNode](http://vpsnode.org/) community.
 
 -   [ ] Join/Leave messages.
     -   [ ] Configurablity through admin commands.
--   [ ] Role menu allowing users to select self-assignable roles.
+-   [x] Role menu allowing users to select self-assignable roles.
     -   [x] Admin setup command
-    -   [ ] Assigning users roles picked.
+    -   [x] Assigning users roles picked.
 -   [ ] Keyword GIF (Send a gif upon a keyword).
     -   [ ] Setup using a command
     -   [ ] Send a GIF when keyword is sent.

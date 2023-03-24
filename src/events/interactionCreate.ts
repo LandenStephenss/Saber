@@ -427,7 +427,7 @@ export default class InteractionCreate extends Event {
                     Date.now() + Command.localData.cooldown;
 
                 this.client.database.editUser(interaction.member, {
-                    commandCooldowns,
+                    $set: commandCooldowns,
                 });
             }
         } catch (err) {

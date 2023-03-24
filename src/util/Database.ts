@@ -114,15 +114,13 @@ export class Database {
      */
     async editUser(
         user: User | Member,
-        changes: UpdateFilter<DatabaseUserType> | Partial<DatabaseUser>
+        changes: UpdateFilter<DatabaseUserType>
     ): Promise<DatabaseUserType> {
         try {
             await this.ensureUser(user);
-            await this.users.updateOne(
-                { _id: user.id },
-                { $set: changes },
-                { comment: `Updated by Discord Bot. (${config.applicationId})` }
-            );
+            await this.users.updateOne({ _id: user.id }, changes, {
+                comment: `Updated by Discord Bot. (${config.applicationId})`,
+            });
             return await this.getUser(user);
         } catch (e) {
             throw new Error('Could not edit user ' + e);

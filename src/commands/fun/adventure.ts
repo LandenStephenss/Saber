@@ -203,18 +203,20 @@ export default class Adventure extends SlashCommand {
             const FirstEnemey = Adventure.enemies[0];
 
             await this.client.database.editUser(interaction.member!, {
-                'adventures.currentAdventure': {
-                    name: AdventureName,
-                    currentEnemey: {
-                        currentHealth: FirstEnemey.health,
-                        currentWeaponHealth: FirstEnemey.weapon.health,
-                        currentArmorHealth: FirstEnemey.armor?.health,
+                $set: {
+                    'adventures.currentAdventure': {
+                        name: AdventureName,
+                        currentEnemey: {
+                            currentHealth: FirstEnemey.health,
+                            currentWeaponHealth: FirstEnemey.weapon.health,
+                            currentArmorHealth: FirstEnemey.armor?.health,
 
-                        health: FirstEnemey.health,
-                        name: FirstEnemey.name,
-                        weapon: FirstEnemey.weapon,
-                        isItemDroppable: FirstEnemey.isItemDroppable,
-                        armor: FirstEnemey.armor,
+                            health: FirstEnemey.health,
+                            name: FirstEnemey.name,
+                            weapon: FirstEnemey.weapon,
+                            isItemDroppable: FirstEnemey.isItemDroppable,
+                            armor: FirstEnemey.armor,
+                        },
                     },
                 },
             });
