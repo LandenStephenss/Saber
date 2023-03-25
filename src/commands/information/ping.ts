@@ -7,7 +7,6 @@ export default class Ping extends SlashCommand {
             name: 'ping',
             description: "See the bot's latency to Discord.",
             category: 'information',
-            cooldown: 5000,
             ephemeral: true,
         });
     }

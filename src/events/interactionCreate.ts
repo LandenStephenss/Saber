@@ -35,7 +35,7 @@ export type ConvertedCommandOptions = {
         // Used for sub commands;
         options?: ConvertedCommandOptions;
         /**
-         * This value is really just redundent. It's not used
+         * This value is really just redundant. It's not used
          * anywhere in the code yet exists for giggles.
          */
         isSubCommand?: boolean;
@@ -113,7 +113,7 @@ export default class InteractionCreate extends Event {
             }
         }
 
-        throw new Error('An unexpected error has occured');
+        throw new Error('An unexpected error has occurred');
     }
 
     /**
@@ -174,7 +174,7 @@ export default class InteractionCreate extends Event {
     ): AdvancedMessageContent {
         const Message: AdvancedMessageContent = {
             flags: 64,
-            content: 'An unexpected error has occured',
+            content: 'An unexpected error has occurred',
         };
 
         if (isDeveloper) {
@@ -351,7 +351,7 @@ export default class InteractionCreate extends Event {
     async handleCommand(interaction: CommandInteraction<GuildTextableChannel>) {
         try {
             if (!interaction.member) {
-                throw new Error('An unexpected error occured, please try again.');
+                throw new Error('An unexpected error occurred, please try again.');
             }
             const Command = this.client.localCommands.get(interaction.data.name);
             if (!Command) {
@@ -445,7 +445,7 @@ export default class InteractionCreate extends Event {
         }
     }
 
-    // really need to type this correctely but i cant be bothered right now.
+    // really need to type this correctly but i cant be bothered right now.
     private updateComponentsCustomID(
         components: any[],
         commandName: string,

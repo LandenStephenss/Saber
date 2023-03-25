@@ -1,14 +1,11 @@
 import {
     type AdvancedMessageContent,
-    CommandInteraction,
-    ComponentInteraction,
-    InteractionContentEdit,
-    TextableChannel,
-    InteractionDataOptionsRole,
-    ComponentInteractionSelectMenuData,
-    SelectMenuOptions,
+    type ComponentInteraction,
+    type InteractionContentEdit,
+    type TextableChannel,
+    type ComponentInteractionSelectMenuData,
 } from 'eris';
-import { Bot } from '../../structures/Client.js';
+import { type Bot } from '../../structures/Client.js';
 import { SlashCommand } from '../../structures/SlashCommand.js';
 import { MessageComponentButtonStyles, MessageComponentTypes } from '../../types.js';
 
@@ -25,6 +22,7 @@ export default class Roles extends SlashCommand {
 
         cancel: 'cancel',
     };
+
     constructor(public client: Bot) {
         super({
             name: 'roles',
@@ -35,7 +33,11 @@ export default class Roles extends SlashCommand {
         });
     }
 
-    sendRoleSelection() {
+    /**
+     * Send's a prompt for the user to select up to 25 roles.
+     * @returns {InteractionContentEdit} Edited message object.
+     */
+    sendRoleSelection(): InteractionContentEdit {
         return {
             content: "Select the roles that you'd like to be user assignable.",
             embeds: [],
@@ -44,6 +46,7 @@ export default class Roles extends SlashCommand {
                     type: MessageComponentTypes.ACTION_ROW,
                     components: [
                         {
+                            // @ts-expect-error eris issue
                             type: MessageComponentTypes.ROLE_SELECT,
                             custom_id: this.componentCustomIDs.roleSelect,
                             max_values: 25,
@@ -65,6 +68,11 @@ export default class Roles extends SlashCommand {
         };
     }
 
+    /**
+     * Sends a prompt asking the user if the selected roles are correct.
+     * @param {ComponentInteraction} interaction
+     * @returns {InteractionContentEdit} Edited message object.
+     */
     private sendRoleConfirmation(
         interaction: ComponentInteraction
     ): InteractionContentEdit {
@@ -117,16 +125,18 @@ export default class Roles extends SlashCommand {
         };
     }
 
-    private async sendChannelSelection(interaction: ComponentInteraction) {
-        // This is gonna be really tacky but it'll work.
+    /**
+     * Send's a prompt for the user to select what channel the **fianl** message should be sent to.
+     * @param {ComponentInteraction} interaction
+     * @returns {Promise<InteractionContentEdit>} Edited message object.
+     */
+    private async sendChannelSelection(
+        interaction: ComponentInteraction
+    ): Promise<InteractionContentEdit> {
         const OriginalMessage = await interaction.getOriginalMessage();
         const RolesFieldValue = OriginalMessage.embeds[0].fields!.find(
             (fld) => fld.name === 'Roles'
         )!.value;
-        // const RoleParseRegex = /(?<=<@&).*?(?=>)/g;
-        // const SelectedRoles = RolesField.value;
-        // .split(', ')
-        // .map((MentionedRole) => RoleParseRegex.exec(MentionedRole)![0]);
 
         return {
             content: '',
@@ -146,6 +156,7 @@ export default class Roles extends SlashCommand {
                     type: MessageComponentTypes.ACTION_ROW,
                     components: [
                         {
+                            // @ts-expect-error
                             type: MessageComponentTypes.CHANNEL_SELECT,
                             custom_id: this.componentCustomIDs.channelSelect,
                         },
@@ -166,20 +177,20 @@ export default class Roles extends SlashCommand {
         };
     }
 
+    /**
+     * Send's a prompt so the user make sure the channel is correct.
+     * @param {ComponentInteraction} interaction
+     * @returns {Promise<InteractionContentEdit>}
+     */
     private async sendChannelConfirmation(
         interaction: ComponentInteraction
     ): Promise<InteractionContentEdit> {
         const OriginalMessage = await interaction.getOriginalMessage();
-        // fetch mentioned roles.
+
         const RolesFieldValue = OriginalMessage.embeds[0].fields!.find(
             (fld) => fld.name === 'Roles'
         )!.value;
-        // const RoleParseRegex = /(?<=<@&).*?(?=>)/g;
-        // const SelectedRoles = RolesField.value;
-        // .split(', ')
-        // .map((MentionedRole) => RoleParseRegex.exec(MentionedRole)![0]);
 
-        // fetch channels
         const ChannelIDs = (interaction.data as ComponentInteractionSelectMenuData)
             .values;
         const MentionedChannels = ChannelIDs.map((channelId) => `<#${channelId}>`); // This should literally never be more than one, but who knows.
@@ -234,6 +245,11 @@ export default class Roles extends SlashCommand {
         };
     }
 
+    /**
+     * Sends the user a preview confirmation message.
+     * @param {ComponentInteraction} interaction
+     * @returns {Promise<InteractionContentEdit>}
+     */
     private async sendPreviewConfirmation(
         interaction: ComponentInteraction
     ): Promise<InteractionContentEdit> {
@@ -320,14 +336,15 @@ export default class Roles extends SlashCommand {
         };
     }
 
+    /**
+     * Sends the fianl role selection message to the specified channel.
+     * @param {ComponentInteraction} interaction
+     */
     private async sendFinishedMessage(interaction: ComponentInteraction) {
         try {
-            // this is really hacky, but it works
             const OriginalMessage = await interaction.getOriginalMessage();
+
             const Data = OriginalMessage.content.split('\n').slice(0, 2);
-            console.log(Data);
-            // todo; get roles.
-            // should be the channel.
             const ChannelID = Data[0]
                 .replace('Channel: ', '')
                 .match(/(?<=<#).*?(?=>)/g)![0];
@@ -335,17 +352,14 @@ export default class Roles extends SlashCommand {
                 .replace('Roles: ', '')
                 .split(',')
                 .map((MentionedRole) => MentionedRole.match(/(?<=<@&).*?(?=>)/g)![0]);
+
             const Guild = this.client.guilds.get(interaction.guildID!);
-            if (!Guild) {
-                throw new Error('Bot could not fetch guild.');
-            }
+            if (!Guild) throw new Error('Bot could not fetch guild.');
 
             const ResolvedRoles = RoleIDs.map((RoleID) => {
-                console.log(RoleID);
                 const Role = Guild.roles.get(RoleID);
-                if (!Role) {
-                    throw new Error(`Could not get role: ${RoleID}`);
-                }
+                if (!Role) throw new Error(`Could not get role: ${RoleID}`);
+
                 return Role;
             });
 
@@ -404,22 +418,18 @@ export default class Roles extends SlashCommand {
             case roleSelect: // This is ran once a user has made a selection of roles.
                 return this.sendRoleConfirmation(interaction);
             case roleConfirm: // This is ran whenever a user confirms the roles on the roles selected embed.
-                // @ts-expect-error eris stupid
                 return await this.sendChannelSelection(interaction);
             case roleDeny: // This is ran whenever a user denys the roles on the roles selected embed.
-                // @ts-expect-error eris stupid
                 return this.sendRoleSelection();
             case channelSelect: // This is ran once the user selects the channel
                 return this.sendChannelConfirmation(interaction);
             case channelConfirm:
                 return await this.sendPreviewConfirmation(interaction);
             case channelDeny:
-                // @ts-expect-error eris stupid
                 return await this.sendChannelSelection(interaction);
             case previewConfirm:
                 return await this.sendFinishedMessage(interaction);
             case previewDeny:
-                // @ts-expect-error eris stupid
                 return this.sendRoleSelection();
             case cancel:
                 interaction.deleteOriginalMessage();
@@ -427,7 +437,6 @@ export default class Roles extends SlashCommand {
     }
 
     run(): AdvancedMessageContent {
-        // @ts-expect-error eris dum af.
         return this.sendRoleSelection();
     }
 }

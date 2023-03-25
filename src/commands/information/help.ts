@@ -8,10 +8,10 @@ import {
     type GuildTextableChannel,
     type AdvancedMessageContent,
     type ComponentInteractionSelectMenuData,
-    InteractionContentEdit,
-    Member,
+    type InteractionContentEdit,
+    type Member,
 } from 'eris';
-import { ConvertedCommandOptions } from '../../events/interactionCreate.js';
+import { type ConvertedCommandOptions } from '../../events/interactionCreate.js';
 import {
     type InteractionAutocompleteChoices,
     MessageComponentButtonStyles,
@@ -44,9 +44,7 @@ export default class Help extends SlashCommand {
     }
 
     private searchCommands(query: string) {
-        if (query && query.trim().length == 0) {
-            return [...this.client.localCommands];
-        }
+        if (query && query.trim().length == 0) return [...this.client.localCommands];
 
         return [...this.client.localCommands].filter(
             ([
@@ -60,8 +58,7 @@ export default class Help extends SlashCommand {
 
     handleCommandAutocomplete(
         option: string,
-        value: string,
-        options: any
+        value: string
     ): InteractionAutocompleteChoices[] | Promise<InteractionAutocompleteChoices[]> {
         switch (option) {
             case 'command':
@@ -107,9 +104,8 @@ export default class Help extends SlashCommand {
     private createCommandEmbed(query: string = 'help'): AdvancedMessageContent {
         try {
             const Command = this.client.localCommands.get(query.toLowerCase());
-            if (!Command) {
-                throw new Error('Command does not exist');
-            }
+            if (!Command) throw new Error('Command does not exist');
+
             return {
                 embeds: [
                     {
@@ -169,18 +165,20 @@ export default class Help extends SlashCommand {
     }
 
     private createBulkEmbed(member: Member): AdvancedMessageContent {
-        const Fields: string[] = [];
-
-        for (const [
-            ,
-            {
-                localData: { category },
-            },
-        ] of this.client.localCommands) {
-            if (!Fields.includes(category)) {
-                Fields.push(category);
-            }
-        }
+        let Fields: string[] = [
+            ...new Set(
+                [...this.client.localCommands].map(
+                    ([
+                        ,
+                        {
+                            localData: { category },
+                        },
+                    ]) => {
+                        return category;
+                    }
+                )
+            ),
+        ];
 
         return {
             embeds: [
@@ -253,9 +251,9 @@ export default class Help extends SlashCommand {
         options: ConvertedCommandOptions
     ) {
         try {
-            if (options.command) {
+            if (options.command)
                 return this.createCommandEmbed(options.command.value as string);
-            }
+
             return this.createBulkEmbed(interaction.member!);
         } catch (e: any) {
             throw new Error(e);

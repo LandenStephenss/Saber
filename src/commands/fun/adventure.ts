@@ -1,13 +1,13 @@
 import {
-    AdvancedMessageContent,
-    ComponentInteraction,
-    InteractionContentEdit,
-    TextableChannel,
+    type AdvancedMessageContent,
+    type ComponentInteraction,
+    type InteractionContentEdit,
+    type TextableChannel,
     type CommandInteraction,
 } from 'eris';
 import { type ConvertedCommandOptions } from '../../events/interactionCreate.js';
-import { Bot } from '../../structures/Client.js';
-import { parsedCustomId, SlashCommand } from '../../structures/SlashCommand.js';
+import { type Bot } from '../../structures/Client.js';
+import { type parsedCustomId, SlashCommand } from '../../structures/SlashCommand.js';
 import {
     type InteractionAutocompleteChoices,
     SlashCommandOptionTypes,
@@ -73,17 +73,14 @@ export default class Adventure extends SlashCommand {
     }
 
     private searchAdventures(query: string = ''): AdventureType[] {
-        if (query.trim().length === 0) {
-            return Adventures.slice(0, 24);
-        }
+        if (query.trim().length === 0) return Adventures.slice(0, 24);
 
         let Result = Adventures.filter(({ name }) =>
             name.includes(query.toLowerCase())
         ).slice(0, 25);
 
-        if (Result.length === 0) {
-            return Adventures.slice(0, 24);
-        }
+        if (Result.length === 0) return Adventures.slice(0, 24);
+
         return Result;
     }
 
@@ -155,7 +152,7 @@ export default class Adventure extends SlashCommand {
 
         if (Value === 'acceptAdventure') {
             const User = await this.client.database.getUser(interaction.member!);
-            if (User.adventures?.currentAdventure) {
+            if (User.adventures?.currentAdventure)
                 return {
                     content: '',
                     embeds: [
@@ -190,7 +187,6 @@ export default class Adventure extends SlashCommand {
                         },
                     ],
                 };
-            }
 
             const AdventureName = Value.replace(/-/g, ' ');
             const Adventure = resolveAdventure(({ name }) => name === AdventureName);
@@ -238,7 +234,7 @@ export default class Adventure extends SlashCommand {
                     value: name,
                 }));
 
-                if (otherOptions.view) {
+                if (otherOptions.view)
                     return [
                         {
                             name: 'All Adventures',
@@ -246,7 +242,7 @@ export default class Adventure extends SlashCommand {
                         },
                         ...SearchedAdventures,
                     ];
-                }
+
                 return SearchedAdventures;
 
             default:
@@ -261,24 +257,22 @@ export default class Adventure extends SlashCommand {
             const ResolvedAdventure = resolveAdventure(
                 ({ name }) => name === AdventureQuery
             );
-            if (!ResolvedAdventure) {
+            if (!ResolvedAdventure)
                 return `Adventure \`${AdventureQuery}\` does not exist.`;
-            }
 
             this.startAdventure(interaction, ResolvedAdventure);
             return 'Starting adventure...';
-        } else if (options.view && options.view.options?.adventure) {
+        }
+
+        if (options.view && options.view.options?.adventure) {
             const AdventureQuery = options.view.options!.adventure.value;
-            if (AdventureQuery === 'all') {
-                return this.createBulkAdventuresEmbed(0);
-            }
+            if (AdventureQuery === 'all') return this.createBulkAdventuresEmbed(0);
 
             const ResolvedAdventure = resolveAdventure(
                 ({ name }) => name === AdventureQuery
             );
-            if (!ResolvedAdventure) {
+            if (!ResolvedAdventure)
                 return `Adventure \`${AdventureQuery}\` does not exist.`;
-            }
 
             return {
                 embeds: [
@@ -306,7 +300,7 @@ export default class Adventure extends SlashCommand {
 
     async startAdventure(interaction: CommandInteraction, adventure: AdventureType) {
         const user = await this.client.database.getUser(interaction.member!);
-        if (user.adventures?.currentAdventure) {
+        if (user.adventures?.currentAdventure)
             await interaction.editOriginalMessage({
                 content: '',
                 embeds: [
@@ -341,7 +335,6 @@ export default class Adventure extends SlashCommand {
                     },
                 ],
             });
-        }
 
         await interaction.editOriginalMessage({
             embeds: [

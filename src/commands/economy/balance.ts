@@ -22,9 +22,9 @@ export default class Ping extends SlashCommand {
 
     async run(interaction: CommandInteraction, options: ConvertedCommandOptions) {
         let ResolvedUser: User | undefined;
-        if (options?.user) {
+        if (options?.user)
             ResolvedUser = this.client.resolveUser(options.user.value as string);
-        }
+
         const { gold } = await this.client.database.getUser(
             ResolvedUser ?? interaction.member!
         );

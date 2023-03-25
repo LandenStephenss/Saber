@@ -67,16 +67,16 @@ export default class Pinged extends SlashCommand {
                 //     },
                 // ],
             };
-        } else if (options.set) {
+        }
+
+        if (options.set) {
             const GIFUrl = options.set.options!.gif_url.value as string;
             const TenorRegex = /http(s):\/\/tenor.com/g;
-            if (!TenorRegex.test(GIFUrl)) {
-                // do set things'
+            if (!TenorRegex.test(GIFUrl))
                 return {
                     flags: 64,
                     content: 'That GIF is invalid. Please use <https://tenor.com>',
                 };
-            }
 
             try {
                 await this.client.database.editUser(interaction.member!, {

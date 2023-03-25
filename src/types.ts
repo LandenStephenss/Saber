@@ -80,11 +80,11 @@ export type Adventure = {
         icon?: unknown;
         thumbnail?: unknown;
     };
-    // Enemies on the adventure -- Will only be null if the enemey could not be resolved.
-    enemies: Enemey[];
+    // Enemies on the adventure -- Will only be null if the enemy could not be resolved.
+    enemies: Enemy[];
 
-    // If requirments is not defined then there are none.
-    requirments?: {
+    // If requirements is not defined then there are none.
+    requirements?: {
         // Minimum amount of XP a user needs to be allowed to play.
         minXP?: number;
         // Maximum XP a user can have to be allowed to play.
@@ -94,22 +94,22 @@ export type Adventure = {
     };
 
     rewards: {
-        // Maximum amount of gold a player can recieve.
+        // Maximum amount of gold a player can receive.
         maxGold: number;
-        // Minimum amount of gold a player can recieve.
+        // Minimum amount of gold a player can receive.
         minGold: number;
-        // Maximum amount of experience a player can recieve.
+        // Maximum amount of experience a player can receive.
         maxExperience: number;
-        // Minimum amount of experience a player can recieve.
+        // Minimum amount of experience a player can receive.
         minExperience: number;
-        // The possible rewards a user can recieve for completing the adventure.
+        // The possible rewards a user can receive for completing the adventure.
         possibleCompletionRewards: Item[];
         // Possible failure rewards, given to users so they're not left with nothing; Could also be mixed with completion rewards if completed.
         possibleRewards: Item[];
     };
 };
 
-export type Enemey = {
+export type Enemy = {
     health: number;
     name: string;
     weapon: AttackItem;
@@ -146,13 +146,13 @@ export type DatabaseUserType = {
     // Adventure related things;
     adventures?: {
         inventory?: {
-            equiped: {
+            equipped: {
                 // A user can bring up to 2 attack items.
                 attack: AttackItem[];
                 // A user can bring multiple potions
                 potion: PotionItem[];
                 // A user can only have one shield
-                sheild: ShieldItem;
+                shield: ShieldItem;
                 // A user can have a full set of armor.
                 armor: ArmorItem[];
             };
@@ -160,7 +160,7 @@ export type DatabaseUserType = {
         };
         currentAdventure?: {
             name: string;
-            equiped: {
+            equipped: {
                 item: Item;
                 // Armor is not required because not all players will have armor.
                 armor?: {
@@ -170,11 +170,11 @@ export type DatabaseUserType = {
                     boots?: ArmorItem & { type: ArmorTypes.BOOTS };
                 };
             };
-            currentEnemey: {
+            currentEnemy: {
                 currentHealth: number;
                 currentWeaponHealth: number;
                 currentArmorHealth?: number;
-            } & Enemey;
+            } & Enemy;
         };
         stats?: {
             totalAdventures: number;
@@ -353,7 +353,7 @@ export enum ChannelTypes {
     GUILD_VOICE = 2,
     GROUP_DM = 3,
     GUILD_CATEGORY = 4,
-    GUILD_ANNOUCEMENT = 5,
+    GUILD_ANNOUNCEMENT = 5,
     ANNOUNCEMENT_THREAD = 10,
     PUBLIC_THREAD = 11,
     PRIVATE_THREAD = 12,

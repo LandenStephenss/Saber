@@ -1,14 +1,14 @@
-import { AttackItemTypes, type Enemey, type Item, type Adventure } from './types.js';
+import { AttackItemTypes, type Enemy, type Item, type Adventure } from './types.js';
 
 let Items: Item[] = [];
 
-const AllEnemies: Enemey[] = [
+const AllEnemies: Enemy[] = [
     {
         name: 'Mushroom Pawn',
         health: 25,
         weapon: {
             type: AttackItemTypes.DAGGER,
-            name: 'Shrrom Dagger',
+            name: 'Shroom Dagger',
             damage: 6,
             health: 100,
         },
@@ -36,14 +36,14 @@ export function resolveAdventure(
     }
 }
 
-export function resolveEnemey(filter: (enemey: Enemey) => boolean): Enemey {
-    for (const Enemey of AllEnemies) {
-        if (filter(Enemey)) {
-            return Enemey;
+export function resolveEnemy(filter: (enemy: Enemy) => boolean): Enemy {
+    for (const Enemy of AllEnemies) {
+        if (filter(Enemy)) {
+            return Enemy;
         }
     }
 
-    throw new Error(`Enemey does not exist. ${filter.toString()}`);
+    throw new Error(`Enemy does not exist. ${filter.toString()}`);
 }
 
 Items = [...Items, ...AllEnemies.filter(({ isItemDroppable }) => isItemDroppable)];
@@ -58,10 +58,10 @@ export const Adventures: Adventure[] = [
             },
         },
         enemies: [
-            resolveEnemey(({ name }) => name === 'Mushroom Pawn'),
-            resolveEnemey(({ name }) => name === 'Forest King'),
+            resolveEnemy(({ name }) => name === 'Mushroom Pawn'),
+            resolveEnemy(({ name }) => name === 'Forest King'),
         ],
-        requirments: {
+        requirements: {
             maxXP: 100,
         },
         rewards: {

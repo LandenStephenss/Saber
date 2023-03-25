@@ -80,7 +80,8 @@ export abstract class SlashCommand {
     ):
         | AdvancedMessageContent
         | MessageContent
-        | Promise<AdvancedMessageContent | MessageContent>;
+        | void
+        | Promise<AdvancedMessageContent | MessageContent | void>;
 }
 
 export type ExtendedSlashCommand = new (client: Bot) => SlashCommand;
