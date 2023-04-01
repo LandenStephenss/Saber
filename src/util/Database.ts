@@ -16,6 +16,7 @@ import {
 import { type Guild, type User, Member } from 'eris';
 import { CronJob } from 'cron';
 import { Bot } from '../structures/Client.js';
+import logger from './logger.js';
 
 export class DatabaseUser {
     gold = config.settings.economy.defaultGold;
@@ -254,7 +255,7 @@ export class Database {
                 break;
             case TaskTypes.UNMUTE:
                 // todo;
-                console.log('unmute user');
+                logger.info('unmute user');
                 break;
             default:
                 throw new Error(
@@ -318,7 +319,7 @@ export class Database {
         try {
             await this.tasks.deleteMany(filter);
         } catch (e) {
-            console.error('Could not delete tasks ' + e);
+            throw new Error('Could not delete tasks ' + e);
         }
     }
 

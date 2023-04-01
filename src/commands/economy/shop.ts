@@ -116,16 +116,16 @@ export default class Shop extends SlashCommand {
 
     run(_: CommandInteraction, options: ConvertedCommandOptions) {
         if (options.view) {
-            if (options.view.options!.item) return 'return specific item';
+            if (options.view.options!.item) return 'return specific item'; // todo;
 
-            return 'return all items';
+            return 'return all items'; // todo;
         }
 
-        if (options.buy) return 'buy an item';
+        if (options.buy) return 'buy an item'; // todo;
 
-        if (options.sell) return 'sell an item';
+        if (options.sell) return 'sell an item'; // todo;
 
-        if (options.gift) return 'gift an item';
+        if (options.gift) return 'gift an item'; // todo;
 
         throw new Error('SubCommand not handled properly ' + options);
     }

@@ -14,6 +14,7 @@ import {
     type Adventure as AdventureType,
     MessageComponentTypes,
     MessageComponentButtonStyles,
+    AdventureState,
 } from '../../types.js';
 import { Adventures, resolveAdventure } from '../../adventures.js';
 
@@ -22,10 +23,11 @@ export default class Adventure extends SlashCommand {
         viewAdventureName: 'viewAdventureName',
     };
 
-    // todo; delete so i can add ID into custom_id
     customIDs = {
         resumeAdventure: 'resumeAdventure',
         declineResume: 'declineResume',
+        acceptAdventure: 'acceptAdventure',
+        declineAdventure: 'declineAdventure',
     };
 
     constructor(public client: Bot) {
@@ -138,10 +140,11 @@ export default class Adventure extends SlashCommand {
         { id }: parsedCustomId
     ): Promise<InteractionContentEdit | void | string> {
         const Value = id;
-        const MaxPages = Math.ceil(Adventures.length / 5);
 
         if (Value.startsWith('page')) {
+            const MaxPages = Math.ceil(Adventures.length / 5);
             const Page = Value.match(/(\d+)$/);
+
             if (!Page) return;
             if (parseInt(Page[0]) >= MaxPages) return;
 
@@ -150,75 +153,74 @@ export default class Adventure extends SlashCommand {
             ) as InteractionContentEdit;
         }
 
-        if (Value === 'acceptAdventure') {
-            const User = await this.client.database.getUser(interaction.member!);
-            if (User.adventures?.currentAdventure)
+        switch (Value) {
+            case this.customIDs.acceptAdventure: {
+                const User = await this.client.database.getUser(interaction.member!);
+                if (User.adventures?.currentState) {
+                    // This get's sent if a user has an on-going adventure.
+                    return {
+                        content: '',
+                        embeds: [
+                            {
+                                color: 12473343,
+                                title: 'You already have an on-going adventure. Would you like to resume?',
+                                fields: [
+                                    {
+                                        name: 'Adventure Name',
+                                        value: User.adventures.currentState.name,
+                                    },
+                                ],
+                            },
+                        ],
+                        components: [
+                            {
+                                type: MessageComponentTypes.ACTION_ROW,
+                                components: [
+                                    {
+                                        type: MessageComponentTypes.BUTTON,
+                                        style: MessageComponentButtonStyles.PRIMARY,
+                                        label: 'Yes',
+                                        custom_id: this.customIDs.resumeAdventure,
+                                    },
+                                    {
+                                        type: MessageComponentTypes.BUTTON,
+                                        style: MessageComponentButtonStyles.DANGER,
+                                        label: 'No',
+                                        custom_id: this.customIDs.declineResume,
+                                    },
+                                ],
+                            },
+                        ],
+                    };
+                }
+
+                const OriginalMessage = await interaction.getOriginalMessage();
+                if (!OriginalMessage) {
+                    throw new Error('Could not find original message.');
+                }
+                const Adventure = resolveAdventure(
+                    // this is really scuffed but it works:tm:
+                    ({ name }) => name === OriginalMessage.embeds[0]!.footer!.text
+                );
+
+                if (!Adventure) {
+                    return {
+                        content: `Could not find the adventure.`,
+                    };
+                }
+
+                return this.sendAdventurePrompt(Adventure);
+            }
+            case this.customIDs.resumeAdventure: {
+                // parse the adventure name from the footer.
                 return {
-                    content: '',
-                    embeds: [
-                        {
-                            color: 12473343,
-                            title: 'You already have an on-going adventure. Would you like to resume?',
-                            fields: [
-                                {
-                                    name: 'Adventure Name',
-                                    value: User.adventures.currentAdventure.name,
-                                },
-                            ],
-                        },
-                    ],
-                    components: [
-                        {
-                            type: MessageComponentTypes.ACTION_ROW,
-                            components: [
-                                {
-                                    type: MessageComponentTypes.BUTTON,
-                                    style: MessageComponentButtonStyles.PRIMARY,
-                                    label: 'Yes',
-                                    custom_id: this.customIDs.resumeAdventure,
-                                },
-                                {
-                                    type: MessageComponentTypes.BUTTON,
-                                    style: MessageComponentButtonStyles.DANGER,
-                                    label: 'No',
-                                    custom_id: this.customIDs.declineResume,
-                                },
-                            ],
-                        },
-                    ],
+                    content: 'test',
                 };
-
-            const AdventureName = Value.replace(/-/g, ' ');
-            const Adventure = resolveAdventure(({ name }) => name === AdventureName);
-
-            if (!Adventure) {
-                interaction.editOriginalMessage('An unexpected error has occured');
-                return;
             }
 
-            const FirstEnemey = Adventure.enemies[0];
-
-            await this.client.database.editUser(interaction.member!, {
-                $set: {
-                    'adventures.currentAdventure': {
-                        name: AdventureName,
-                        currentEnemey: {
-                            currentHealth: FirstEnemey.health,
-                            currentWeaponHealth: FirstEnemey.weapon.health,
-                            currentArmorHealth: FirstEnemey.armor?.health,
-
-                            health: FirstEnemey.health,
-                            name: FirstEnemey.name,
-                            weapon: FirstEnemey.weapon,
-                            isItemDroppable: FirstEnemey.isItemDroppable,
-                            armor: FirstEnemey.armor,
-                        },
-                    },
-                },
-            });
-
-            // todo; start moves embed.
-            return;
+            case this.customIDs.declineAdventure: {
+                interaction.deleteOriginalMessage();
+            }
         }
     }
 
@@ -260,8 +262,7 @@ export default class Adventure extends SlashCommand {
             if (!ResolvedAdventure)
                 return `Adventure \`${AdventureQuery}\` does not exist.`;
 
-            this.startAdventure(interaction, ResolvedAdventure);
-            return 'Starting adventure...';
+            return this.startAdventure(interaction, ResolvedAdventure);
         }
 
         if (options.view && options.view.options?.adventure) {
@@ -279,14 +280,14 @@ export default class Adventure extends SlashCommand {
                     {
                         title: Adventure.name,
                         description: ResolvedAdventure.description,
-                        fields: ResolvedAdventure.enemies.map((enemey) => ({
-                            name: enemey.name,
+                        fields: ResolvedAdventure.enemies.map((enemy) => ({
+                            name: enemy.name,
                             value: `\`\`\`nestedtext
-  Health: ${enemey.health}
+  Health: ${enemy.health}
   Weapon:
-      Name: ${enemey.weapon.name}
-      Damage: ${enemey.weapon.damage}
-      Health: ${enemey.weapon.health}
+      Name: ${enemy.weapon.name}
+      Damage: ${enemy.weapon.damage}
+      Health: ${enemy.weapon.health}
   \`\`\``,
                             inline: true,
                         })),
@@ -298,10 +299,16 @@ export default class Adventure extends SlashCommand {
         throw new Error('Could not handle sub command');
     }
 
-    async startAdventure(interaction: CommandInteraction, adventure: AdventureType) {
+    async startAdventure(
+        interaction: CommandInteraction,
+        adventure: AdventureType
+    ): Promise<InteractionContentEdit> {
         const user = await this.client.database.getUser(interaction.member!);
-        if (user.adventures?.currentAdventure)
-            await interaction.editOriginalMessage({
+        if (!user) {
+            throw new Error('Could not get user');
+        }
+        if (user.adventures?.currentState)
+            return {
                 content: '',
                 embeds: [
                     {
@@ -310,7 +317,7 @@ export default class Adventure extends SlashCommand {
                         fields: [
                             {
                                 name: 'Adventure Name',
-                                value: user.adventures.currentAdventure.name,
+                                value: user.adventures.currentState.name,
                             },
                         ],
                     },
@@ -334,9 +341,9 @@ export default class Adventure extends SlashCommand {
                         ],
                     },
                 ],
-            });
+            };
 
-        await interaction.editOriginalMessage({
+        return {
             embeds: [
                 {
                     color: 12473343,
@@ -354,28 +361,38 @@ export default class Adventure extends SlashCommand {
                             type: MessageComponentTypes.BUTTON,
                             style: MessageComponentButtonStyles.PRIMARY,
                             label: 'Yes',
-                            custom_id: `adventure-acceptAdventure-${adventure.name.replace(
-                                / /g,
-                                '%20'
-                            )}-${interaction.member?.id}`,
+                            custom_id: this.customIDs.acceptAdventure,
                         },
                         {
                             type: MessageComponentTypes.BUTTON,
                             style: MessageComponentButtonStyles.DANGER,
                             label: 'No',
-                            custom_id: `adventure-declineAdventure-${interaction.member?.id}`,
+                            custom_id: this.customIDs.declineAdventure,
                         },
                     ],
                 },
             ],
-        });
+        };
     }
 
     /**
      * A prompt asking the user what they'd like to do
-     * Whenever a user responds to this prompt, it will handle the enemey attack and then resend itself.
+     * Whenever a user responds to this prompt, it will handle the enemy attack and then resend itself.
+     *
+     * Example Options
+     *
+     * 1 - Attack
+     * 2 - Defend
+     * 3 - Surrender
      */
-    sendAdventurePrompt() {}
+    sendAdventurePrompt(
+        adventure: AdventureType,
+        currentState?: AdventureState
+    ): AdvancedMessageContent {
+        return {
+            content: 'adventure prompt',
+        };
+    }
 
     // handle user attack;
     handleAttack() {}
@@ -383,6 +400,6 @@ export default class Adventure extends SlashCommand {
     // handle user defend;
     handleDefend() {}
 
-    // hande user surrender;
-    handleSurender() {}
+    // handed user surrender;
+    handleSurrender() {}
 }

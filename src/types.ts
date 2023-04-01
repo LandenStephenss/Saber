@@ -124,6 +124,25 @@ export type PlayerSkill = {
     level: number;
 };
 
+export type AdventureState = {
+    name: string;
+    equipped: {
+        item: Item;
+        // Armor is not required because not all players will have armor.
+        armor?: {
+            helmet?: ArmorItem & { type: ArmorTypes.HELMET };
+            chestplate?: ArmorItem & { type: ArmorTypes.CHESTPLATE };
+            pants?: ArmorItem & { type: ArmorTypes.PANTS };
+            boots?: ArmorItem & { type: ArmorTypes.BOOTS };
+        };
+    };
+    currentEnemy: {
+        currentHealth: number;
+        currentWeaponHealth: number;
+        currentArmorHealth?: number;
+    } & Enemy;
+};
+
 export type DatabaseUserType = {
     _id: string;
     gold: number;
@@ -158,24 +177,7 @@ export type DatabaseUserType = {
             };
             other: Item[];
         };
-        currentAdventure?: {
-            name: string;
-            equipped: {
-                item: Item;
-                // Armor is not required because not all players will have armor.
-                armor?: {
-                    helmet?: ArmorItem & { type: ArmorTypes.HELMET };
-                    chestplate?: ArmorItem & { type: ArmorTypes.CHESTPLATE };
-                    pants?: ArmorItem & { type: ArmorTypes.PANTS };
-                    boots?: ArmorItem & { type: ArmorTypes.BOOTS };
-                };
-            };
-            currentEnemy: {
-                currentHealth: number;
-                currentWeaponHealth: number;
-                currentArmorHealth?: number;
-            } & Enemy;
-        };
+        currentState?: AdventureState;
         stats?: {
             totalAdventures: number;
             adventuresWon: number;
@@ -190,6 +192,12 @@ export type DatabaseGuildType = {
     _id: string;
     // Contains all modlog entries for the guild.
     modlog: ModLogEntry[];
+
+    welcome?: {
+        enabled: boolean;
+        join?: string;
+        leave?: string;
+    };
 
     // Moderation settings -- todo; automod;
     moderation: {

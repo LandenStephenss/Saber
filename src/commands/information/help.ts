@@ -1,5 +1,3 @@
-// todo; filter out commands (and empty category fields) that the user does not have permission to use.
-
 import { parsedCustomId, SlashCommand } from '../../structures/SlashCommand.js';
 import { type Bot } from '../../structures/Client.js';
 import {

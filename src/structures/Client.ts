@@ -4,6 +4,7 @@ import { Database } from '../util/Database.js';
 import { loadFiles } from '../util/loadFiles.js';
 import { type ExtendedEvent } from './Event.js';
 import { type ExtendedSlashCommand, type SlashCommand } from './SlashCommand.js';
+import logger from '../util/logger.js';
 
 enum InteractionTypes {
     PING = 1,
@@ -70,26 +71,41 @@ export class Bot extends Client {
 
     private async loadCommands() {
         const commands = await loadFiles<ExtendedSlashCommand>('../commands');
+        let loadedCommands = new Array();
         for (const commandClass of commands) {
             const command = new commandClass(this);
             this.localCommands.set(command.slashCommandData.name, command);
-            console.log(`Command loaded: ${command.slashCommandData.name}`);
+            loadedCommands.push(command.slashCommandData.name);
         }
+
+        logger.info(
+            `Commands Loaded: ${loadedCommands
+                .map((name) => `\u001b[33m${name}\u001b[0m`)
+                .join(', ')}.`
+        );
     }
 
     private async loadEvents() {
         const events = await loadFiles<ExtendedEvent>('../events');
+        const loadedEvents = new Array();
         for (const eventClass of events) {
             const event = new eventClass(this);
             this.on(event.name, (...args) => {
                 try {
                     event.run(...args);
                 } catch (e) {
-                    console.error(e);
+                    logger.error(e as string);
                 }
             });
-            console.log(`Loaded event: ${event.name}`);
+            loadedEvents.push(event.name);
         }
+        logger.debug('test');
+
+        logger.info(
+            `Events Loaded: ${loadedEvents
+                .map((name) => `\u001b[33m${name}\u001b[0m`)
+                .join(', ')}.`
+        );
     }
 
     private async getDevelopers() {

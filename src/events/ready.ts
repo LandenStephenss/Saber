@@ -1,12 +1,13 @@
 import { Event } from '../structures/Event.js';
 import { type SlashCommandData } from '../types.js';
+import logger from '../util/logger.js';
 
 export default class Ready extends Event {
     name = 'ready';
 
     run() {
         const { username, discriminator, id } = this.client.user;
-        console.log(`${username}#${discriminator} (${id}) is now online!`);
+        logger.info(`${username}#${discriminator} (${id}) is now online!`);
 
         this.editCommands(
             [...this.client.localCommands]

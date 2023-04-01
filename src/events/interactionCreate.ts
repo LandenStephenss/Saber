@@ -19,6 +19,7 @@ import {
     SlashCommandOptionTypes,
 } from '../types.js';
 import { config } from '../config.js';
+import logger from '../util/logger.js';
 
 enum RoleEditedType {
     ADDED = 1,
@@ -87,7 +88,7 @@ export default class InteractionCreate extends Event {
                     );
                     break;
                 case InteractionTypes.MODAL_SUBMIT:
-                    console.log('Modal submit interaction is not yet supported.');
+                    logger.warn('Modal submit interaction is not yet supported.');
                     break;
             }
         } catch (e: any) {
@@ -127,7 +128,7 @@ export default class InteractionCreate extends Event {
         try {
             const Command = this.client.localCommands.get(interaction.data.name);
             if (!Command || !Command.handleCommandAutocomplete) {
-                console.error(
+                logger.warn(
                     'Could not handle autocomplete properly, ' + interaction.data.name
                 );
                 return;
@@ -393,7 +394,6 @@ export default class InteractionCreate extends Event {
 
             let CommandResult = await Command.run(interaction, options);
             if (CommandResult) {
-                // todo; probably append the user id to all custom_id here, so that command code doesn't look ugly.
                 if (typeof CommandResult === 'object') {
                     if (CommandResult.embeds) {
                         for (const [index, embed] of CommandResult.embeds.entries()) {
@@ -430,7 +430,7 @@ export default class InteractionCreate extends Event {
                     $set: commandCooldowns,
                 });
             }
-        } catch (err) {
+        } catch (err: any) {
             if (!interaction.acknowledged) {
                 await interaction.acknowledge(64);
             }
@@ -441,7 +441,7 @@ export default class InteractionCreate extends Event {
                     config.developers.includes(interaction.member!.id)
                 )
             );
-            throw new Error('Could not handle command');
+            logger.error(err.toString());
         }
     }
 
