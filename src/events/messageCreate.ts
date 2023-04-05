@@ -1,4 +1,4 @@
-import { GuildTextableChannel, Message } from 'eris';
+import type { GuildTextableChannel, Message } from 'eris';
 import { Event } from '../structures/Event.js';
 export default class MessageCreate extends Event {
     name = 'messageCreate';

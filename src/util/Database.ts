@@ -2,8 +2,8 @@ import {
     type Collection,
     type DeleteResult,
     MongoClient,
-    ObjectId,
-    UpdateFilter,
+    type ObjectId,
+    type UpdateFilter,
 } from 'mongodb';
 import { config } from '../config.js';
 import {
@@ -13,15 +13,25 @@ import {
     type ModLogEntry,
     TaskTypes,
 } from '../types.js';
-import { type Guild, type User, Member } from 'eris';
+import type { Guild, User, Member } from 'eris';
 import { CronJob } from 'cron';
-import { Bot } from '../structures/Client.js';
+import type { Bot } from '../structures/Client.js';
 import logger from './logger.js';
 
 export class DatabaseUser {
     gold = config.settings.economy.defaultGold;
     experience = 0;
     level = 0;
+
+    constructor(public _id: string) {}
+}
+
+export class DatabaseGuild {
+    moderation = {
+        roles: {
+            muted: null,
+        },
+    };
 
     constructor(public _id: string) {}
 }
@@ -152,24 +162,18 @@ export class Database {
      * @returns {Promise<DatabaseGuildType>}
      */
     private async ensureGuild(guild: Guild): Promise<DatabaseGuildType> {
-        const NewGuild: DatabaseGuildType = {
-            _id: guild.id,
-            modlog: [],
-            moderation: {
-                roles: {
-                    // If the guild has a role called muted, then use that as default.
-                    muted:
-                        guild.roles.find((role) => role.name.toLowerCase() === 'muted')
-                            ?.id ?? null,
-                },
-            },
-        };
+        const ExistingGuild = await this.guilds.findOne({ _id: guild.id });
+        if (ExistingGuild) {
+            return ExistingGuild;
+        }
+
+        const NewGuild: DatabaseGuildType = new DatabaseGuild(guild.id);
 
         try {
             await this.guilds.insertOne(NewGuild);
             return NewGuild;
         } catch (e) {
-            throw new Error('Could not create the guild. ' + e);
+            throw new Error('Could not create the user. ' + e);
         }
     }
 

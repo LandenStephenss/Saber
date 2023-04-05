@@ -191,10 +191,19 @@ export type DatabaseUserType = {
 export type DatabaseGuildType = {
     _id: string;
     // Contains all modlog entries for the guild.
-    modlog: ModLogEntry[];
+    modlog?: ModLogEntry[];
 
+    /**
+     * {user} = User Mention
+     * {userID} = User ID
+     * {guild} = Guild name
+     * {guildID} = Guild ID
+     */
     welcome?: {
         enabled: boolean;
+        // If dms are set to true while there is a channel sent then it will be sent to the channel and the user.
+        dms?: boolean;
+        channel?: string;
         join?: string;
         leave?: string;
     };

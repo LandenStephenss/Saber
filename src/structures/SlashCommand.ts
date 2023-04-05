@@ -1,4 +1,4 @@
-import { type Bot } from './Client.js';
+import type { Bot } from './Client.js';
 import type {
     GuildTextableChannel,
     AdvancedMessageContent,

@@ -1,15 +1,15 @@
-import { parsedCustomId, SlashCommand } from '../../structures/SlashCommand.js';
-import { type Bot } from '../../structures/Client.js';
-import {
-    type ComponentInteraction,
-    type CommandInteraction,
-    type GuildTextableChannel,
-    type AdvancedMessageContent,
-    type ComponentInteractionSelectMenuData,
-    type InteractionContentEdit,
-    type Member,
+import type {
+    ComponentInteraction,
+    CommandInteraction,
+    GuildTextableChannel,
+    AdvancedMessageContent,
+    ComponentInteractionSelectMenuData,
+    InteractionContentEdit,
+    Member,
 } from 'eris';
-import { type ConvertedCommandOptions } from '../../events/interactionCreate.js';
+import { type parsedCustomId, SlashCommand } from '../../structures/SlashCommand.js';
+import type { Bot } from '../../structures/Client.js';
+import type { ConvertedCommandOptions } from '../../events/interactionCreate.js';
 import {
     type InteractionAutocompleteChoices,
     MessageComponentButtonStyles,

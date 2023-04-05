@@ -1,13 +1,12 @@
-import { Bot } from '../../structures/Client.js';
+import type { Bot } from '../../structures/Client.js';
+import type { CommandInteraction } from 'eris';
 import { SlashCommand } from '../../structures/SlashCommand.js';
 import {
     InteractionAutocompleteChoices,
-    Item,
+    type Item,
     SlashCommandOptionTypes,
 } from '../../types.js';
-
 import { Items } from '../../adventures.js';
-import { CommandInteraction } from 'eris';
 import { ConvertedCommandOptions } from '../../events/interactionCreate.js';
 
 export default class Shop extends SlashCommand {

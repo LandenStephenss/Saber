@@ -1,11 +1,11 @@
-import {
-    type AdvancedMessageContent,
-    type ComponentInteraction,
-    type InteractionContentEdit,
-    type TextableChannel,
-    type ComponentInteractionSelectMenuData,
+import type {
+    AdvancedMessageContent,
+    ComponentInteraction,
+    InteractionContentEdit,
+    TextableChannel,
+    ComponentInteractionSelectMenuData,
 } from 'eris';
-import { type Bot } from '../../structures/Client.js';
+import type { Bot } from '../../structures/Client.js';
 import { SlashCommand } from '../../structures/SlashCommand.js';
 import { MessageComponentButtonStyles, MessageComponentTypes } from '../../types.js';
 

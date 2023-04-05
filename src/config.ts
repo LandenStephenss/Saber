@@ -1,5 +1,5 @@
 import { readFile } from 'fs/promises';
-import { type Adventure, type Item } from './types.js';
+import type { Adventure, Item } from './types.js';
 
 export type Cfg = {
     applicationId: string;

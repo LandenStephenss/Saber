@@ -8,6 +8,8 @@ A multi-purpose Discord bot for the [VPSNode](http://vpsnode.org/) community.
 
 -   [ ] Join/Leave messages.
     -   [ ] Configurable through admin commands.
+    -   [x] Send a message to a specific channel.
+    -   [x] Send a DM to the user.
 -   [x] Role menu allowing users to select self-assignable roles.
     -   [x] Admin setup command
     -   [x] Assigning users roles picked.
@@ -42,6 +44,9 @@ A multi-purpose Discord bot for the [VPSNode](http://vpsnode.org/) community.
     -   [ ] Kick/(Soft)ban.
     -   [ ] Mute.
         -   [ ] Configurable through admin commands (setting `mute` role).
+-   [ ] Database things
+    -   [x] Add, Delete, and Edit users from database through code.
+    -   [ ] Automatically find usable channels and roles in the guild upon joining.
 
 ### Example Command Structure
 

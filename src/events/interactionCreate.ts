@@ -1,4 +1,3 @@
-import { Event } from '../structures/Event.js';
 import type {
     PingInteraction,
     UnknownInteraction,
@@ -14,6 +13,7 @@ import type {
     InteractionDataOptionsSubCommand,
     ComponentInteractionSelectMenuData,
 } from 'eris';
+import { Event } from '../structures/Event.js';
 import {
     type InteractionAutocompleteChoices,
     SlashCommandOptionTypes,
@@ -418,8 +418,6 @@ export default class InteractionCreate extends Event {
                     CommandResult.embed.color = 12473343;
 
                 interaction.createFollowup(CommandResult);
-
-                // Add the user's cooldown;
                 if (!commandCooldowns) {
                     commandCooldowns = {};
                 }
@@ -427,7 +425,7 @@ export default class InteractionCreate extends Event {
                     Date.now() + Command.localData.cooldown;
 
                 this.client.database.editUser(interaction.member, {
-                    $set: commandCooldowns,
+                    $set: { commandCooldowns },
                 });
             }
         } catch (err: any) {

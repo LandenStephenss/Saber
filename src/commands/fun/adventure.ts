@@ -1,20 +1,20 @@
-import {
-    type AdvancedMessageContent,
-    type ComponentInteraction,
-    type InteractionContentEdit,
-    type TextableChannel,
-    type CommandInteraction,
+import type {
+    AdvancedMessageContent,
+    ComponentInteraction,
+    InteractionContentEdit,
+    TextableChannel,
+    CommandInteraction,
 } from 'eris';
-import { type ConvertedCommandOptions } from '../../events/interactionCreate.js';
-import { type Bot } from '../../structures/Client.js';
+import type { ConvertedCommandOptions } from '../../events/interactionCreate.js';
+import type { Bot } from '../../structures/Client.js';
 import { type parsedCustomId, SlashCommand } from '../../structures/SlashCommand.js';
 import {
+    type Adventure as AdventureType,
+    type AdventureState,
     type InteractionAutocompleteChoices,
     SlashCommandOptionTypes,
-    type Adventure as AdventureType,
     MessageComponentTypes,
     MessageComponentButtonStyles,
-    AdventureState,
 } from '../../types.js';
 import { Adventures, resolveAdventure } from '../../adventures.js';
 

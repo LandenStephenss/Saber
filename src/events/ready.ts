@@ -1,5 +1,5 @@
 import { Event } from '../structures/Event.js';
-import { type SlashCommandData } from '../types.js';
+import type { SlashCommandData } from '../types.js';
 import logger from '../util/logger.js';
 
 export default class Ready extends Event {

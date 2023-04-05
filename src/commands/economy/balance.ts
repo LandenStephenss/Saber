@@ -1,6 +1,6 @@
-import { CommandInteraction, User } from 'eris';
-import { type ConvertedCommandOptions } from '../../events/interactionCreate.js';
-import { Bot } from '../../structures/Client.js';
+import type { CommandInteraction, User } from 'eris';
+import type { ConvertedCommandOptions } from '../../events/interactionCreate.js';
+import type { Bot } from '../../structures/Client.js';
 import { SlashCommand } from '../../structures/SlashCommand.js';
 import { SlashCommandOptionTypes } from '../../types.js';
 
