@@ -99,7 +99,6 @@ export class Bot extends Client {
             });
             loadedEvents.push(event.name);
         }
-        logger.debug('test');
 
         logger.info(
             `Events Loaded: ${loadedEvents

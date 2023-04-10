@@ -2,6 +2,15 @@ import { AttackItemTypes, type Enemy, type Item, type Adventure } from './types.
 
 let Items: Item[] = [];
 
+/**
+ * We use this number with the following formula:
+ * ((AdventureScalingPercentage * UserLevel) * Damage) + Damage
+ *
+ * This is so that a user cannot keep replaying a adventure to get insane amounts of XP.
+ * The formula is used for health and damage.
+ */
+const AdventureScalingPercentage = 0.025;
+
 const AllEnemies: Enemy[] = [
     {
         name: 'Mushroom Pawn',
@@ -26,6 +35,21 @@ const AllEnemies: Enemy[] = [
     },
 ];
 
+/**
+ * Scales a number (Can be health, damage, etc) according to the users level.
+ * @param {number} amount Number to be scaled.
+ * @param {number} level User level
+ * @returns {number} The scaled number.
+ */
+export function scaleAmount(amount: number, level: number): number {
+    return amount + AdventureScalingPercentage * level * amount;
+}
+
+/**
+ * Resolve an adventure with a filter.
+ * @param filter Filter to search the adventure for.
+ * @returns {Adventure} Resulted adventure.
+ */
 export function resolveAdventure(
     filter: (adventure: Adventure) => boolean
 ): Adventure | void {
@@ -34,8 +58,15 @@ export function resolveAdventure(
             return Adventure;
         }
     }
+
+    throw new Error(`Adventure does not exist. ${filter.toString()}`);
 }
 
+/**
+ * Resolve an enemy with a filter.
+ * @param filter Filter to search the enemy for.
+ * @returns {Enemy} Resulted enemy.
+ */
 export function resolveEnemy(filter: (enemy: Enemy) => boolean): Enemy {
     for (const Enemy of AllEnemies) {
         if (filter(Enemy)) {

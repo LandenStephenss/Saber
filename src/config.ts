@@ -1,5 +1,4 @@
 import { readFile } from 'fs/promises';
-import type { Adventure, Item } from './types.js';
 
 export type Cfg = {
     applicationId: string;
@@ -18,10 +17,6 @@ export type Cfg = {
             defaultGold: number;
         };
     };
-
-    adventures: { [key: string]: Adventure };
-    // Items that will be in the store. Other items *can* exist, but they may not be dropped or even aquired in some cases.
-    storeItems: { [key: string]: Item };
 };
 
 let config: Cfg;
