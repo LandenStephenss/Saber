@@ -15,14 +15,17 @@
     },
     "type": "module",
     "dependencies": {
-        "@types/node": "^18.14.2",
         "cron": "^2.2.0",
         "dotenv": "^16.0.3",
         "eris": "^0.17.1",
+        "module-alias": "^2.2.2",
         "mongodb": "^5.1.0"
     },
     "devDependencies": {
         "@types/cron": "^2.0.0",
-        "@types/ws": "^8.5.4"
+        "@types/module-alias": "^2.0.1",
+        "@types/node": "^18.14.2",
+        "@types/ws": "^8.5.4",
+        "esbuild": "^0.17.16"
     }
 }

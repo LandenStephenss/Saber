@@ -7,15 +7,15 @@ import type {
     InteractionContentEdit,
     Member,
 } from 'eris';
-import { type parsedCustomId, SlashCommand } from '../../structures/SlashCommand.js';
-import type { Bot } from '../../structures/Client.js';
-import type { ConvertedCommandOptions } from '../../events/interactionCreate.js';
+import { type parsedCustomId, SlashCommand } from '../../../structures/SlashCommand.js';
+import type { Bot } from '../../../structures/Client.js';
+import type { ConvertedCommandOptions } from '../../../events/interactionCreate.js';
 import {
     type InteractionAutocompleteChoices,
     MessageComponentButtonStyles,
     MessageComponentTypes,
     SlashCommandOptionTypes,
-} from '../../types.js';
+} from '../../../types.js';
 
 export default class Help extends SlashCommand {
     customIDs = {

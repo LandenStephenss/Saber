@@ -33,7 +33,7 @@ export default class Ping extends SlashCommand {
             embed: {
                 title: `${
                     options?.user?.user?.username ?? interaction.member?.username
-                } has ${gold} gold!`,
+                } has ${gold} gold coins!`,
             },
             flags: 64,
         };

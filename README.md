@@ -4,6 +4,19 @@ A multi-purpose Discord bot for the [VPSNode](http://vpsnode.org/) community.
 
 ---
 
+## Starting the bot
+
+Clone the repository using `git clone https://github.com/LandenStephenss/Saber`.
+Then run the following:
+
+```
+cd Saber
+npm install
+npm run build
+
+pm2 start ./dist/main.js --name "Saber" --watch --ext .js -c "0 0 * * *"
+```
+
 ## TO-DO List:
 
 -   [ ] Join/Leave messages.

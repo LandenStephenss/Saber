@@ -45,17 +45,24 @@ export function scaleAmount(amount: number, level: number): number {
     return amount + AdventureScalingPercentage * level * amount;
 }
 
+export function scaleAdventure(adventure: Adventure, level: number): Adventure {
+    // scale rewards, enemy health, enemy damage, etc;
+    // todo; too lazy right now.
+    return adventure;
+}
+
 /**
  * Resolve an adventure with a filter.
  * @param filter Filter to search the adventure for.
  * @returns {Adventure} Resulted adventure.
  */
 export function resolveAdventure(
-    filter: (adventure: Adventure) => boolean
+    filter: (adventure: Adventure) => boolean,
+    level: number = 0
 ): Adventure | void {
     for (const Adventure of Adventures) {
         if (filter(Adventure)) {
-            return Adventure;
+            return scaleAdventure(Adventure, level);
         }
     }
 
