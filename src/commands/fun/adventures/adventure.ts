@@ -4,10 +4,13 @@ import type {
     InteractionContentEdit,
     TextableChannel,
     CommandInteraction,
+    Member,
+    GuildTextable,
+    GuildTextableChannel,
 } from 'eris';
-import type { ConvertedCommandOptions } from '../../events/interactionCreate.js';
-import type { Bot } from '../../structures/Client.js';
-import { type parsedCustomId, SlashCommand } from '../../structures/SlashCommand.js';
+import type { ConvertedCommandOptions } from '../../../events/interactionCreate.js';
+import type { Bot } from '../../../structures/Client.js';
+import { type parsedCustomId, SlashCommand } from '../../../structures/SlashCommand.js';
 import {
     type Adventure as AdventureType,
     type AdventureState,
@@ -15,8 +18,8 @@ import {
     SlashCommandOptionTypes,
     MessageComponentTypes,
     MessageComponentButtonStyles,
-} from '../../types.js';
-import { Adventures, resolveAdventure } from '../../adventures.js';
+} from '../../../types.js';
+import { Adventures, resolveAdventure } from '../../../adventures.js';
 
 export default class Adventure extends SlashCommand {
     autocompleteNames = {
@@ -28,6 +31,14 @@ export default class Adventure extends SlashCommand {
         declineResume: 'declineResume',
         acceptAdventure: 'acceptAdventure',
         declineAdventure: 'declineAdventure',
+
+        startAdventure: 'startAdventure',
+
+        adventureAttack: 'adventureAttack',
+        adventureDefend: 'adventureDefend',
+        adventureSurrender: 'adventureSurrender',
+
+        decline: 'decline',
     };
 
     constructor(public client: Bot) {
@@ -153,6 +164,10 @@ export default class Adventure extends SlashCommand {
             ) as InteractionContentEdit;
         }
 
+        if (!interaction.member) {
+            throw new Error('Interaction has no member.');
+        }
+
         switch (Value) {
             case this.customIDs.acceptAdventure: {
                 const User = await this.client.database.getUser(interaction.member!);
@@ -186,7 +201,7 @@ export default class Adventure extends SlashCommand {
                                         type: MessageComponentTypes.BUTTON,
                                         style: MessageComponentButtonStyles.DANGER,
                                         label: 'No',
-                                        custom_id: this.customIDs.declineResume,
+                                        custom_id: this.customIDs.decline,
                                     },
                                 ],
                             },
@@ -209,16 +224,15 @@ export default class Adventure extends SlashCommand {
                     };
                 }
 
+                // todo; fix this ASAP. Working on inventory system before doing this.
+                // @ts-expect-error
                 return this.sendAdventurePrompt(Adventure);
             }
             case this.customIDs.resumeAdventure: {
-                // parse the adventure name from the footer.
-                return {
-                    content: 'test',
-                };
+                return this.resumeAdventure(interaction.member);
             }
 
-            case this.customIDs.declineAdventure: {
+            case this.customIDs.decline: {
                 interaction.deleteOriginalMessage();
             }
         }
@@ -253,6 +267,10 @@ export default class Adventure extends SlashCommand {
     }
 
     run(interaction: CommandInteraction, options: ConvertedCommandOptions) {
+        if (!interaction.member) {
+            throw new Error('Interaction has no member');
+        }
+
         if (options.start && options.start.options?.adventure) {
             const AdventureQuery = options.start.options.adventure.value as string;
 
@@ -296,7 +314,34 @@ export default class Adventure extends SlashCommand {
             };
         }
 
+        if (options.resume) {
+            return this.resumeAdventure(interaction.member);
+        }
+
         throw new Error('Could not handle sub command');
+    }
+
+    // Resume the user's adventure.
+    async resumeAdventure(member: Member): Promise<AdvancedMessageContent> {
+        const user = await this.client.database.getUser(member);
+        if (!user) {
+            throw new Error('Could not get user.');
+        }
+
+        if (!user.adventures?.currentState) {
+            return {
+                content: '',
+                embeds: [
+                    {
+                        color: 12473343,
+                        title: `You do not currently have an adventure started. Start one by running the command </${this.slashCommandData.name} start:${this.id}>`,
+                    },
+                ],
+                components: [],
+            };
+        }
+
+        return this.sendAdventurePrompt(user.adventures.currentState);
     }
 
     async startAdventure(
@@ -336,7 +381,7 @@ export default class Adventure extends SlashCommand {
                                 type: MessageComponentTypes.BUTTON,
                                 style: MessageComponentButtonStyles.DANGER,
                                 label: 'No',
-                                custom_id: this.customIDs.declineResume,
+                                custom_id: this.customIDs.decline,
                             },
                         ],
                     },
@@ -367,7 +412,7 @@ export default class Adventure extends SlashCommand {
                             type: MessageComponentTypes.BUTTON,
                             style: MessageComponentButtonStyles.DANGER,
                             label: 'No',
-                            custom_id: this.customIDs.declineAdventure,
+                            custom_id: this.customIDs.decline,
                         },
                     ],
                 },
@@ -386,11 +431,38 @@ export default class Adventure extends SlashCommand {
      * 3 - Surrender
      */
     sendAdventurePrompt(
-        adventure: AdventureType,
+        adventure: AdventureState,
         currentState?: AdventureState
     ): AdvancedMessageContent {
+        // todo; prompt the user to make a move
         return {
-            content: 'adventure prompt',
+            content: 'WIP;',
+            embeds: [],
+            components: [
+                {
+                    type: MessageComponentTypes.ACTION_ROW,
+                    components: [
+                        {
+                            type: MessageComponentTypes.BUTTON,
+                            style: MessageComponentButtonStyles.PRIMARY,
+                            label: 'Attack',
+                            custom_id: this.customIDs.adventureAttack,
+                        },
+                        {
+                            type: MessageComponentTypes.BUTTON,
+                            style: MessageComponentButtonStyles.PRIMARY,
+                            label: 'Defend',
+                            custom_id: this.customIDs.adventureDefend,
+                        },
+                        {
+                            type: MessageComponentTypes.BUTTON,
+                            style: MessageComponentButtonStyles.DANGER,
+                            label: 'Surrender',
+                            custom_id: this.customIDs.adventureSurrender,
+                        },
+                    ],
+                },
+            ],
         };
     }
 

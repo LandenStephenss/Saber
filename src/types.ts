@@ -203,9 +203,15 @@ export type DatabaseGuildType = {
         enabled: boolean;
         // If dms are set to true while there is a channel sent then it will be sent to the channel and the user.
         dms?: boolean;
+        // Channel that the message will be sent to.
         channel?: string;
+        // Message to be sent whenever a user joins.
         join?: string;
+        // Message to be sent whenever a user leaves.
         leave?: string;
+        // Role that is assigned to a user upon joining.
+        // Will probably change this to an array at some point, but i don't think discord supports multi-role selections via slash command options.
+        role?: string; // this is a role ID
     };
 
     // Moderation settings -- todo; automod;
