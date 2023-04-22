@@ -5,8 +5,6 @@ import type {
     TextableChannel,
     CommandInteraction,
     Member,
-    GuildTextable,
-    GuildTextableChannel,
 } from 'eris';
 import type { ConvertedCommandOptions } from '../../../events/interactionCreate.js';
 import type { Bot } from '../../../structures/Client.js';
@@ -55,7 +53,6 @@ export default class Adventure extends SlashCommand {
                         {
                             type: SlashCommandOptionTypes.STRING,
                             name: 'adventure',
-                            required: true,
                             description: "Name of the adventure you'd like to view.",
                             autocomplete: true,
                         },
@@ -283,9 +280,13 @@ export default class Adventure extends SlashCommand {
             return this.startAdventure(interaction, ResolvedAdventure);
         }
 
-        if (options.view && options.view.options?.adventure) {
-            const AdventureQuery = options.view.options!.adventure.value;
-            if (AdventureQuery === 'all') return this.createBulkAdventuresEmbed(0);
+        if (options.view) {
+            if (!options.view.options?.adventure) {
+                return this.createBulkAdventuresEmbed(0);
+            }
+
+            const AdventureQuery = options.view.options!.adventure?.value;
+            console.log(AdventureQuery);
 
             const ResolvedAdventure = resolveAdventure(
                 ({ name }) => name === AdventureQuery
