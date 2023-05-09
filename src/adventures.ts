@@ -1,6 +1,32 @@
-import { AttackItemTypes, type Enemy, type Item, type Adventure } from './types.js';
+import {
+    AttackItemTypes,
+    type Enemy,
+    type Item,
+    type Adventure,
+    AttackItem,
+} from './types.js';
 
-let Items: Item[] = [];
+// Means that a user will only have a 65% to successfully defend from an attack.
+export const DefenseChance = 0.65;
+
+let Items: Item[] = [
+    {
+        name: 'Wooden Sword',
+
+        minPrice: 10,
+        maxPrice: 25,
+        type: AttackItemTypes.SWORD,
+        damage: 7,
+        health: 150,
+    },
+];
+
+export const FistItem: AttackItem = {
+    type: AttackItemTypes.FIST,
+    name: `{username}'s Fists`,
+    health: 100,
+    damage: 5,
+};
 
 /**
  * We use this number with the following formula:
@@ -112,5 +138,8 @@ export const Adventures: Adventure[] = [
         },
     },
 ];
+
+// Best way to export items for the store, will include dropped items from enemies but only if they have min/max price values.
+export const StoreItems: Item[] = Items.filter((i) => i.maxPrice || i.minPrice);
 
 export { Items };

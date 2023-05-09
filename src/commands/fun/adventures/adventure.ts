@@ -16,8 +16,9 @@ import {
     SlashCommandOptionTypes,
     MessageComponentTypes,
     MessageComponentButtonStyles,
+    AttackItem,
 } from '../../../types.js';
-import { Adventures, resolveAdventure } from '../../../adventures.js';
+import { Adventures, resolveAdventure, DefenseChance } from '../../../adventures.js';
 
 export default class Adventure extends SlashCommand {
     autocompleteNames = {
@@ -35,6 +36,9 @@ export default class Adventure extends SlashCommand {
         adventureAttack: 'adventureAttack',
         adventureDefend: 'adventureDefend',
         adventureSurrender: 'adventureSurrender',
+
+        confirmSurrender: 'confirmSurrender',
+        declineSurrender: 'declineSurrender',
 
         decline: 'decline',
     };
@@ -76,6 +80,12 @@ export default class Adventure extends SlashCommand {
                     type: SlashCommandOptionTypes.SUB_COMMAND,
                     name: 'resume',
                     description: 'Resume an on-going adventure.',
+                    options: [],
+                },
+                {
+                    type: SlashCommandOptionTypes.SUB_COMMAND,
+                    name: 'surrender',
+                    description: 'Surrender an on-going adventure.',
                     options: [],
                 },
             ],
@@ -169,7 +179,6 @@ export default class Adventure extends SlashCommand {
             case this.customIDs.acceptAdventure: {
                 const User = await this.client.database.getUser(interaction.member!);
                 if (User.adventures?.currentState) {
-                    // This get's sent if a user has an on-going adventure.
                     return {
                         content: '',
                         embeds: [
@@ -221,14 +230,139 @@ export default class Adventure extends SlashCommand {
                     };
                 }
 
-                // todo; fix this ASAP. Working on inventory system before doing this.
-                // @ts-expect-error
-                return this.sendAdventurePrompt(Adventure);
+                if (
+                    !User.adventures.inventory.equipped.attack ||
+                    User.adventures.inventory.equipped.attack.length === 0
+                ) {
+                    return {
+                        // todo; link user to inventory command.
+                        content: 'You do not have any items equipped.',
+                    };
+                }
+
+                const CurrentState = {
+                    name: Adventure.name,
+                    equipped: {
+                        attack: User.adventures.inventory.equipped.attack.map(
+                            (att: AttackItem) => ({
+                                ...att,
+                                currentHealth: att.health,
+                            })
+                        ),
+                        armor: {
+                            helmet: User.adventures.inventory.equipped.armor?.helmet
+                                ? {
+                                      currentHealth:
+                                          User.adventures.inventory.equipped.armor.helmet
+                                              .health,
+                                      ...User.adventures.inventory.equipped.armor.helmet,
+                                  }
+                                : undefined,
+                            chestplate: User.adventures.inventory.equipped.armor
+                                ?.chestplate
+                                ? {
+                                      currentHealth:
+                                          User.adventures.inventory.equipped.armor
+                                              .chestplate.health,
+                                      ...User.adventures.inventory.equipped.armor
+                                          .chestplate,
+                                  }
+                                : undefined,
+                            pants: User.adventures.inventory.equipped.armor?.pants
+                                ? {
+                                      currentHealth:
+                                          User.adventures.inventory.equipped.armor.pants
+                                              .health,
+                                      ...User.adventures.inventory.equipped.armor.pants,
+                                  }
+                                : undefined,
+                            boots: User.adventures.inventory.equipped.armor?.boots
+                                ? {
+                                      currentHealth:
+                                          User.adventures.inventory.equipped.armor.boots
+                                              .health,
+                                      ...User.adventures.inventory.equipped.armor.boots,
+                                  }
+                                : undefined,
+                        },
+                    },
+
+                    currentEnemy: {
+                        currentHealth: Adventure.enemies[0].health,
+                        currentWeapon: {
+                            ...Adventure.enemies[0].weapon,
+                            currentHealth: 0,
+                        },
+                        currentArmor: {
+                            // todo;
+                            helmet: undefined,
+                            chestplate: undefined,
+                            pants: undefined,
+                            boots: undefined,
+                        },
+                        ...Adventure.enemies[0],
+                    },
+                };
+
+                try {
+                    await this.client.database.editUser(interaction.member!, {
+                        $set: {
+                            'adventures.currentState': CurrentState,
+                        },
+                        $unset: {
+                            'adventures.inventory.equipped.attack': true,
+                            'adventures.inventory.equipped.potion': true,
+                            'adventures.inventory.equipped.shield': true,
+                            'adventures.inventory.equipped.armor': true,
+                        },
+                    });
+
+                    return this.sendAdventurePrompt(CurrentState);
+                } catch (e) {
+                    throw new Error('Could not set adventure state.');
+                }
             }
             case this.customIDs.resumeAdventure: {
                 return this.resumeAdventure(interaction.member);
             }
 
+            case this.customIDs.adventureAttack: {
+                return this.handleAttack(interaction.member!);
+            }
+            case this.customIDs.adventureDefend: {
+                return this.handleDefend(interaction.member!);
+            }
+            case this.customIDs.adventureSurrender: {
+                return {
+                    content: "Are you sure you'd like to surrender?",
+                    embeds: [],
+                    components: [
+                        {
+                            type: MessageComponentTypes.ACTION_ROW,
+                            components: [
+                                {
+                                    type: MessageComponentTypes.BUTTON,
+                                    style: MessageComponentButtonStyles.PRIMARY,
+                                    label: 'Yes',
+                                    custom_id: this.customIDs.confirmSurrender,
+                                },
+                                {
+                                    type: MessageComponentTypes.BUTTON,
+                                    style: MessageComponentButtonStyles.DANGER,
+                                    label: 'No',
+                                    custom_id: this.customIDs.declineSurrender,
+                                },
+                            ],
+                        },
+                    ],
+                };
+            }
+            case this.customIDs.confirmSurrender: {
+                return this.handleSurrender(interaction.member!);
+            }
+            case this.customIDs.declineSurrender: {
+                return this.resumeAdventure(interaction.member);
+            }
             case this.customIDs.decline: {
                 interaction.deleteOriginalMessage();
             }
@@ -317,6 +451,10 @@ export default class Adventure extends SlashCommand {
 
         if (options.resume) {
             return this.resumeAdventure(interaction.member);
+        }
+
+        if (options.surrender) {
+            return this.handleSurrender(interaction.member!);
         }
 
         throw new Error('Could not handle sub command');
@@ -431,48 +569,166 @@ export default class Adventure extends SlashCommand {
      * 2 - Defend
      * 3 - Surrender
      */
-    sendAdventurePrompt(
-        adventure: AdventureState,
-        currentState?: AdventureState
-    ): AdvancedMessageContent {
-        // todo; prompt the user to make a move
-        return {
-            content: 'WIP;',
-            embeds: [],
-            components: [
-                {
-                    type: MessageComponentTypes.ACTION_ROW,
-                    components: [
-                        {
-                            type: MessageComponentTypes.BUTTON,
-                            style: MessageComponentButtonStyles.PRIMARY,
-                            label: 'Attack',
-                            custom_id: this.customIDs.adventureAttack,
-                        },
-                        {
-                            type: MessageComponentTypes.BUTTON,
-                            style: MessageComponentButtonStyles.PRIMARY,
-                            label: 'Defend',
-                            custom_id: this.customIDs.adventureDefend,
-                        },
-                        {
-                            type: MessageComponentTypes.BUTTON,
-                            style: MessageComponentButtonStyles.DANGER,
-                            label: 'Surrender',
-                            custom_id: this.customIDs.adventureSurrender,
-                        },
-                    ],
-                },
-            ],
-        };
+    sendAdventurePrompt(currentState: AdventureState): AdvancedMessageContent {
+        try {
+            // todo; prompt the user to make a move
+            const Adventure = Adventures.find((i) => i.name === currentState.name);
+
+            if (!Adventure) {
+                throw new Error('Adventure no longer exists!');
+            }
+
+            return {
+                content: 'WIP;',
+                embeds: [
+                    {
+                        title: Adventure.name,
+                        fields: [
+                            {
+                                name: 'Current Enemey',
+                                value: `\`\`\`nestedtext
+Health: ${currentState.currentEnemy.currentHealth}/${currentState.currentEnemy.health}
+Weapon:
+    Name: ${currentState.currentEnemy.weapon.name}
+    Damage: ${currentState.currentEnemy.weapon.damage}
+    Health: ${currentState.currentEnemy.currentWeapon.currentHealth}/${currentState.currentEnemy.weapon.health}
+\`\`\``,
+                                inline: true,
+                            },
+                            // TODO; add armor to this embed field.
+                            {
+                                name: 'Equipped Items',
+                                value: `\`\`\`nestedtext
+Attack: ${currentState.equipped.attack
+                                    .map(
+                                        (i) => `
+    Name: ${i.name}
+        Health: ${i.currentHealth}/${i.health}
+        Damage: ${i.damage}
+        Type: ${i.type.split('')[0].toUpperCase() + i.type.split('').slice(1).join('')}`
+                                    )
+                                    .join('\n')}
+
+Armor:
+    Helmet: ${
+        currentState.equipped.armor?.helmet
+            ? `
+        Name: ${currentState.equipped.armor.helmet.name}
+        Health: ${currentState.equipped.armor.helmet.currentHealth}/${currentState.equipped.armor.helmet.health}`
+            : 'N/A'
+    }
+    Chestplate: ${
+        currentState.equipped.armor?.chestplate
+            ? `
+        Name: ${currentState.equipped.armor.chestplate.name}
+        Health: ${currentState.equipped.armor.chestplate.currentHealth}/${currentState.equipped.armor.chestplate.health}`
+            : 'N/A'
+    }
+    Pants: ${
+        currentState.equipped.armor?.pants
+            ? `
+        Name: ${currentState.equipped.armor.pants.name}
+        Health: ${currentState.equipped.armor.pants.currentHealth}/${currentState.equipped.armor.pants.health}`
+            : 'N/A'
+    }
+    Boots: ${
+        currentState.equipped.armor?.boots
+            ? `
+        Name: ${currentState.equipped.armor.boots.name}
+        Health: ${currentState.equipped.armor.boots.currentHealth}/${currentState.equipped.armor.boots.health}`
+            : 'N/A'
+    }
+\`\`\``,
+                                inline: true,
+                            },
+                        ],
+                    },
+                ],
+                components: [
+                    {
+                        type: MessageComponentTypes.ACTION_ROW,
+                        components: [
+                            {
+                                type: MessageComponentTypes.BUTTON,
+                                style: MessageComponentButtonStyles.PRIMARY,
+                                label: 'Attack',
+                                custom_id: this.customIDs.adventureAttack,
+                            },
+                            {
+                                type: MessageComponentTypes.BUTTON,
+                                style: MessageComponentButtonStyles.PRIMARY,
+                                label: 'Defend',
+                                custom_id: this.customIDs.adventureDefend,
+                            },
+                            {
+                                type: MessageComponentTypes.BUTTON,
+                                style: MessageComponentButtonStyles.DANGER,
+                                label: 'Surrender',
+                                custom_id: this.customIDs.adventureSurrender,
+                            },
+                        ],
+                    },
+                ],
+            };
+        } catch (e: any) {
+            throw new Error(e);
+        }
     }
 
     // handle user attack;
-    handleAttack() {}
+    handleAttack(member: Member) {
+        console.log('user is attacking');
+    }
 
     // handle user defend;
-    handleDefend() {}
+    handleDefend(member: Member) {
+        const CanDefend = parseInt(Math.random().toFixed(2)) <= DefenseChance;
+
+        if (CanDefend) {
+            console.log('user has defended successfully');
+        } else {
+            console.log('user could not defend');
+        }
+    }
 
     // handed user surrender;
-    handleSurrender() {}
+    // todo; if user has not made a move, give them back their equipped items.
+    async handleSurrender(member: Member) {
+        const CurrentAdventureState = await this.client.database.getUser(member);
+        if (!CurrentAdventureState.adventures.currentState) {
+            return {
+                content:
+                    'Could not surrender because you do not currently have an adventure started.',
+                embeds: [],
+                components: [],
+            };
+        }
+
+        const Adventure = resolveAdventure(
+            (a) => a.name === CurrentAdventureState.adventures.currentState!.name
+        );
+
+        if (!Adventure) {
+            this.client.database.editUser(member, {
+                $unset: {
+                    'adventures.currentState': true,
+                },
+            });
+            throw new Error('Adventure does not exist anymore.');
+        }
+
+        // unsetting it like this **will** lose the players inventory even if they have not made a move yet.
+        // Should probably fix that, or let the user know that their inventory is non-recoverable unless they complete the adventure.
+        this.client.database.editUser(member, {
+            $unset: {
+                'adventures.currentState': true,
+            },
+        });
+
+        return {
+            content: `You have surrendered the adventure \`${Adventure.name}\``,
+            embeds: [],
+            components: [],
+        };
+    }
 }

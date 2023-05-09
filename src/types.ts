@@ -3,16 +3,18 @@ import type { ObjectId } from 'mongodb';
 export type Item = AttackItem | PotionItem | ShieldItem | ArmorItem;
 
 export enum AttackItemTypes {
-    SWORD = 1,
-    AXE = 2,
-    LONG_SWORD = 3,
-    SHORT_SWORD = 4,
-    DAGGER = 5,
+    SWORD = 'sword',
+    AXE = 'axe',
+    LONG_SWORD = 'long_sword',
+    SHORT_SWORD = 'short_sword',
+    DAGGER = 'dagger',
     // Bow does not have limited amount of arrows
-    BOW = 6,
+    BOW = 'bow',
+    FIST = 'fist', // this value is purely for whenever the user goes into an adventure without a weapon
 }
 
 export type BaseItem = {
+    type?: unknown;
     name: string;
     // Price in the store will fluctuate - Not all items are available;
     minPrice?: number;
@@ -28,10 +30,10 @@ export type AttackItem = {
 } & BaseItem;
 
 export enum PotionItemTypes {
-    HEALING = 1,
-    DAMAGE = 2,
-    // Slow potion will stun the enemy making them unable to attack for a short time.
-    SLOW = 3,
+    HEALING = 'healing',
+    DAMAGE = 'damage',
+    // Stun potion will stun the enemy making them unable to attack for a short time.
+    STUN = 'stun',
 }
 
 export type PotionItem = {
@@ -55,10 +57,10 @@ export type ShieldItem = {
 } & BaseItem;
 
 export enum ArmorTypes {
-    HELMET = 1,
-    CHESTPLATE = 2,
-    PANTS = 3,
-    BOOTS = 4,
+    HELMET = 'helmet',
+    CHESTPLATE = 'chestplate',
+    PANTS = 'pants',
+    BOOTS = 'boots',
 }
 
 export type ArmorItem = {
@@ -124,22 +126,33 @@ export type PlayerSkill = {
     level: number;
 };
 
+export type AttackItemState = AttackItem & {
+    currentHealth: number;
+};
+
+export type ArmorItemState = { currentHealth: number } & ArmorItem;
+
 export type AdventureState = {
     name: string;
     equipped: {
-        item: Item;
+        attack: AttackItemState[];
         // Armor is not required because not all players will have armor.
-        armor?: {
-            helmet?: ArmorItem & { type: ArmorTypes.HELMET };
-            chestplate?: ArmorItem & { type: ArmorTypes.CHESTPLATE };
-            pants?: ArmorItem & { type: ArmorTypes.PANTS };
-            boots?: ArmorItem & { type: ArmorTypes.BOOTS };
+        armor: {
+            helmet?: ArmorItemState & { type: ArmorTypes.HELMET };
+            chestplate?: ArmorItemState & { type: ArmorTypes.CHESTPLATE };
+            pants?: ArmorItemState & { type: ArmorTypes.PANTS };
+            boots?: ArmorItemState & { type: ArmorTypes.BOOTS };
         };
     };
     currentEnemy: {
         currentHealth: number;
-        currentWeaponHealth: number;
-        currentArmorHealth?: number;
+        currentWeapon: AttackItemState;
+        currentArmor?: {
+            helmet?: ArmorItemState & { type: ArmorTypes.HELMET };
+            chestplate?: ArmorItemState & { type: ArmorTypes.CHESTPLATE };
+            pants?: ArmorItemState & { type: ArmorTypes.PANTS };
+            boots?: ArmorItemState & { type: ArmorTypes.BOOTS };
+        };
     } & Enemy;
 };
 
@@ -163,19 +176,24 @@ export type DatabaseUserType = {
     };
 
     // Adventure related things;
-    adventures?: {
-        inventory?: {
+    adventures: {
+        inventory: {
             equipped: {
                 // A user can bring up to 2 attack items.
-                attack: AttackItem[];
+                attack?: AttackItem[];
                 // A user can bring multiple potions
-                potion: PotionItem[];
+                potion?: PotionItem[];
                 // A user can only have one shield
-                shield: ShieldItem;
+                shield?: ShieldItem;
                 // A user can have a full set of armor.
-                armor: ArmorItem[];
+                armor?: {
+                    helmet?: ArmorItem & { type: ArmorTypes.HELMET };
+                    chestplate?: ArmorItem & { type: ArmorTypes.CHESTPLATE };
+                    pants?: ArmorItem & { type: ArmorTypes.PANTS };
+                    boots?: ArmorItem & { type: ArmorTypes.BOOTS };
+                };
             };
-            other: Item[];
+            other?: Item[];
         };
         currentState?: AdventureState;
         stats?: {

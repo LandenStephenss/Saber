@@ -12,16 +12,33 @@ import {
     type DatabaseTask,
     type ModLogEntry,
     TaskTypes,
+    AttackItem,
+    AttackItemTypes,
 } from '../types.js';
 import type { Guild, User, Member } from 'eris';
 import { CronJob } from 'cron';
 import type { Bot } from '../structures/Client.js';
 import logger from './logger.js';
+import { Items } from '../adventures.js';
 
 export class DatabaseUser {
     gold = config.settings.economy.defaultGold;
     experience = 0;
     level = 0;
+
+    adventures = {
+        inventory: {
+            equipped: {
+                // This should never be null
+                attack: new Array(
+                    Items.find(
+                        (i) =>
+                            i.name === 'Wooden Sword' && i.type === AttackItemTypes.SWORD
+                    )! as AttackItem
+                ),
+            },
+        },
+    };
 
     constructor(public _id: string) {}
 }
