@@ -64,6 +64,12 @@ export default class Adventure extends SlashCommand {
                 },
                 {
                     type: SlashCommandOptionTypes.SUB_COMMAND,
+                    name: 'list',
+                    description: 'List all the adventures.',
+                    options: [],
+                },
+                {
+                    type: SlashCommandOptionTypes.SUB_COMMAND,
                     name: 'start',
                     description: 'Start an adventure.',
                     options: [
@@ -241,6 +247,7 @@ export default class Adventure extends SlashCommand {
                 }
 
                 const CurrentState = {
+                    move: 0,
                     name: Adventure.name,
                     equipped: {
                         attack: User.adventures.inventory.equipped.attack.map(
@@ -291,14 +298,33 @@ export default class Adventure extends SlashCommand {
                         currentHealth: Adventure.enemies[0].health,
                         currentWeapon: {
                             ...Adventure.enemies[0].weapon,
-                            currentHealth: 0,
+                            currentHealth: Adventure.enemies[0].weapon.health,
                         },
                         currentArmor: {
-                            // todo;
-                            helmet: undefined,
-                            chestplate: undefined,
-                            pants: undefined,
-                            boots: undefined,
+                            helmet: Adventure.enemies[0].armor?.helmet
+                                ? {
+                                      ...Adventure.enemies[0].armor?.helmet,
+                                      currentHealth: 0,
+                                  }
+                                : undefined,
+                            chestplate: Adventure.enemies[0].armor?.chestplate
+                                ? {
+                                      ...Adventure.enemies[0].armor?.chestplate,
+                                      currentHealth: 0,
+                                  }
+                                : undefined,
+                            pants: Adventure.enemies[0].armor?.pants
+                                ? {
+                                      ...Adventure.enemies[0].armor?.pants,
+                                      currentHealth: 0,
+                                  }
+                                : undefined,
+                            boots: Adventure.enemies[0].armor?.boots
+                                ? {
+                                      ...Adventure.enemies[0].armor?.boots,
+                                      currentHealth: 0,
+                                  }
+                                : undefined,
                         },
                         ...Adventure.enemies[0],
                     },
@@ -414,13 +440,12 @@ export default class Adventure extends SlashCommand {
             return this.startAdventure(interaction, ResolvedAdventure);
         }
 
-        if (options.view) {
-            if (!options.view.options?.adventure) {
+        if (options.view || options.list) {
+            if (!options.view?.options?.adventure) {
                 return this.createBulkAdventuresEmbed(0);
             }
 
             const AdventureQuery = options.view.options!.adventure?.value;
-            console.log(AdventureQuery);
 
             const ResolvedAdventure = resolveAdventure(
                 ({ name }) => name === AdventureQuery
@@ -694,8 +719,10 @@ Armor:
     // handed user surrender;
     // todo; if user has not made a move, give them back their equipped items.
     async handleSurrender(member: Member) {
-        const CurrentAdventureState = await this.client.database.getUser(member);
-        if (!CurrentAdventureState.adventures.currentState) {
+        const {
+            adventures: { currentState },
+        } = await this.client.database.getUser(member);
+        if (!currentState) {
             return {
                 content:
                     'Could not surrender because you do not currently have an adventure started.',
@@ -704,9 +731,7 @@ Armor:
             };
         }
 
-        const Adventure = resolveAdventure(
-            (a) => a.name === CurrentAdventureState.adventures.currentState!.name
-        );
+        const Adventure = resolveAdventure((a) => a.name === currentState.name);
 
         if (!Adventure) {
             this.client.database.editUser(member, {
@@ -717,13 +742,32 @@ Armor:
             throw new Error('Adventure does not exist anymore.');
         }
 
-        // unsetting it like this **will** lose the players inventory even if they have not made a move yet.
-        // Should probably fix that, or let the user know that their inventory is non-recoverable unless they complete the adventure.
-        this.client.database.editUser(member, {
-            $unset: {
-                'adventures.currentState': true,
-            },
-        });
+        if (currentState.move === 0) {
+            // The user has not made a move and their items will be returned to them.
+            this.client.database.editUser(member, {
+                $set: {
+                    'adventures.inventory.equipped': {
+                        attack: currentState.equipped.attack,
+                        armor: {
+                            helmet: currentState.equipped.armor.helmet,
+                            chestplate: currentState.equipped.armor.chestplate,
+                            pants: currentState.equipped.armor.pants,
+                            boots: currentState.equipped.armor.boots,
+                        },
+                    },
+                },
+                $unset: {
+                    'adventures.currentState': true,
+                },
+            });
+        } else {
+            // If the user has made a move then items will not be returned to their inventory.
+            this.client.database.editUser(member, {
+                $unset: {
+                    'adventures.currentState': true,
+                },
+            });
+        }
 
         return {
             content: `You have surrendered the adventure \`${Adventure.name}\``,

@@ -1,7 +1,7 @@
 import { type ClientOptions, Client, type ComponentInteraction } from 'eris';
 import { config } from '../config.js';
 import { Database } from '../util/Database.js';
-import { loadFiles } from '../util/loadFiles.js';
+import { loadFiles } from '../util/index.js';
 import type { ExtendedEvent } from './Event.js';
 import type { ExtendedSlashCommand, SlashCommand } from './SlashCommand.js';
 import logger from '../util/logger.js';

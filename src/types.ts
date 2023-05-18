@@ -118,7 +118,12 @@ export type Enemy = {
     // Whether the player is able to obtain the item.
     // Items are obtainable upon completion.
     isItemDroppable?: boolean;
-    armor?: ArmorItem;
+    armor?: {
+        helmet?: ArmorItem & { type: ArmorTypes.HELMET };
+        chestplate?: ArmorItem & { type: ArmorTypes.CHESTPLATE };
+        pants?: ArmorItem & { type: ArmorTypes.PANTS };
+        boots?: ArmorItem & { type: ArmorTypes.BOOTS };
+    };
 };
 
 export type PlayerSkill = {
@@ -133,6 +138,8 @@ export type AttackItemState = AttackItem & {
 export type ArmorItemState = { currentHealth: number } & ArmorItem;
 
 export type AdventureState = {
+    /** Amount of moves that the player has made. */
+    move: number;
     name: string;
     equipped: {
         attack: AttackItemState[];
@@ -235,7 +242,10 @@ export type DatabaseGuildType = {
     // Moderation settings -- todo; automod;
     moderation: {
         roles: {
-            muted: string | null;
+            // Used to mute members.
+            muted?: string;
+            // Used to check who's admin and who's not. Used only to send direct messages to administrators.
+            admin?: string;
         };
     };
 };

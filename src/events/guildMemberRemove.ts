@@ -1,6 +1,6 @@
 import type { Guild, Member } from 'eris';
 import { Event } from '../structures/Event.js';
-import { replaceShortcuts } from '../util/replaceShortcuts.js';
+import { replaceShortcuts } from '../util/index.js';
 import logger from '../util/logger.js';
 
 export default class GuildMemberRemove extends Event {

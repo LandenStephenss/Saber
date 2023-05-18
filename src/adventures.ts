@@ -85,7 +85,7 @@ export function scaleAdventure(adventure: Adventure, level: number): Adventure {
 export function resolveAdventure(
     filter: (adventure: Adventure) => boolean,
     level: number = 0
-): Adventure | void {
+): Adventure {
     for (const Adventure of Adventures) {
         if (filter(Adventure)) {
             return scaleAdventure(Adventure, level);

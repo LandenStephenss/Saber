@@ -45,9 +45,7 @@ export class DatabaseUser {
 
 export class DatabaseGuild {
     moderation = {
-        roles: {
-            muted: null,
-        },
+        roles: {},
     };
 
     constructor(public _id: string) {}
