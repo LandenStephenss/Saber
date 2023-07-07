@@ -1,6 +1,6 @@
 import type { Guild, Member } from 'eris';
 import { Event } from '../structures/Event.js';
-import { replaceShortcuts } from '../util/replaceShortcuts.js';
+import { replaceShortcuts } from '../util/index.js';
 import logger from '../util/logger.js';
 
 export default class GuildMemberAdd extends Event {
@@ -16,7 +16,28 @@ export default class GuildMemberAdd extends Event {
 
         if (GuildEntry.welcome.channel) {
             if (!guild.channels.has(GuildEntry.welcome.channel)) {
-                // Should probably DM administrators and delete the channel in the database.
+                // dum
+
+                this.client.database.editGuild(guild, {
+                    $unset: {
+                        'welcome.channel': true,
+                    },
+                });
+
+                if (GuildEntry.moderation.roles.admin) {
+                    if (!guild.roles.has(GuildEntry.moderation.roles.admin ?? 0)) {
+                        this.client.database.editGuild(guild, {
+                            $unset: {
+                                'moderation.roles.admin': true,
+                            },
+                        });
+                        // maybe dm server owner.
+                        throw new Error('Admin role is invalid, role was deleted.');
+                    }
+
+                    //                    const AdminRole = guild.roles.get(GuildEntry.moderation.roles.admin);
+                }
+
                 throw new Error('Cannot get channel, could it have been deleted?');
             }
 

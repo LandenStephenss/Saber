@@ -8,6 +8,8 @@ import {
 
 // Means that a user will only have a 65% to successfully defend from an attack.
 export const DefenseChance = 0.65;
+// Min and max values in percentages that can be taken away from user items.
+export const DefenseCost = [0.02, 0.07];
 
 let Items: Item[] = [
     {

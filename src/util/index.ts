@@ -73,3 +73,7 @@ export const loadFiles = async <T>(path: string): Promise<T[]> => {
 
     return modules;
 };
+
+export function randomMinMax(min: number, max: number) {
+    return min + Math.random() * (max - min);
+}

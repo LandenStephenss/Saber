@@ -18,7 +18,13 @@ import {
     MessageComponentButtonStyles,
     AttackItem,
 } from '../../../types.js';
-import { Adventures, resolveAdventure, DefenseChance } from '../../../adventures.js';
+import {
+    Adventures,
+    resolveAdventure,
+    DefenseChance,
+    DefenseCost,
+} from '../../../adventures.js';
+import { randomMinMax } from '../../../util/index.js';
 
 export default class Adventure extends SlashCommand {
     autocompleteNames = {
@@ -349,14 +355,14 @@ export default class Adventure extends SlashCommand {
                 }
             }
             case this.customIDs.resumeAdventure: {
-                return this.resumeAdventure(interaction.member);
+                return await this.resumeAdventure(interaction.member);
             }
 
             case this.customIDs.adventureAttack: {
-                return this.handleAttack(interaction.member!);
+                return await this.handleAttack(interaction.member!);
             }
             case this.customIDs.adventureDefend: {
-                return this.handleDefend(interaction.member!);
+                return await this.handleDefend(interaction.member!);
             }
             case this.customIDs.adventureSurrender: {
                 return {
@@ -604,7 +610,6 @@ export default class Adventure extends SlashCommand {
             }
 
             return {
-                content: 'WIP;',
                 embeds: [
                     {
                         title: Adventure.name,
@@ -700,17 +705,38 @@ Armor:
         }
     }
 
+    // todo;
     // handle user attack;
     handleAttack(member: Member) {
         console.log('user is attacking');
     }
 
+    // todo;
     // handle user defend;
-    handleDefend(member: Member) {
+    async handleDefend(member: Member) {
         const CanDefend = parseInt(Math.random().toFixed(2)) <= DefenseChance;
+        const User = await this.client.database.getUser(member);
+
+        if (!User.adventures.currentState) {
+            // todo; throw user an error message and nuke any currentState related items.
+            throw new Error('Cannot defend whenever user has no current adventure.');
+        }
 
         if (CanDefend) {
-            console.log('user has defended successfully');
+            let DamagedAttackItems = User.adventures.currentState.equipped.attack.map(
+                (itm) => ({
+                    ...itm,
+                    currentHealth:
+                        itm.currentHealth -
+                        itm.currentHealth * randomMinMax(DefenseCost[0], DefenseCost[1]),
+                })
+            );
+
+            return {
+                content: 'You successfully defended',
+            };
+
+            // todo; handle armor damage.
         } else {
             console.log('user could not defend');
         }

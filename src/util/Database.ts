@@ -219,7 +219,7 @@ export class Database {
      */
     async editGuild(
         guild: Guild,
-        changes: Partial<DatabaseGuildType>
+        changes: UpdateFilter<DatabaseGuildType>
     ): Promise<DatabaseGuildType> {
         try {
             await this.ensureGuild(guild);
