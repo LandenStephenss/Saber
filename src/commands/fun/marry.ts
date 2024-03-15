@@ -45,6 +45,8 @@ export default class Ping extends SlashCommand {
         interaction: CommandInteraction,
         options: ConvertedCommandOptions
     ): Promise<AdvancedMessageContent> {
+        if (!interaction.member) throw new TypeError('No member specified');
+
         // Command should always be ran in guild so this doesn't really matter.
         const DatabaseUser = await this.client.database.getUser(interaction.member!);
 
@@ -61,7 +63,7 @@ export default class Ping extends SlashCommand {
                 if (!options.propose.options?.user)
                     throw new TypeError('User is not defined');
 
-                // need to set both users to married to eachother
+                // need to send msg asking if want to mar ry
             }
         }
         if (options.divorce) {
