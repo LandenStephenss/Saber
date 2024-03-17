@@ -11,12 +11,6 @@ export type Cfg = {
         uri: string;
         database: string;
     };
-
-    settings: {
-        economy: {
-            defaultGold: number;
-        };
-    };
 };
 
 let config: Cfg;
