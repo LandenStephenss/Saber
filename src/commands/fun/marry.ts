@@ -87,6 +87,7 @@ export default class Marry extends SlashCommand {
                     },
                 ],
             });
+            return;
         }
 
         const CommandDatabaseUser = await this.client.database.getUser(CommandUser);
@@ -103,6 +104,7 @@ export default class Marry extends SlashCommand {
                             },
                         ],
                     });
+                    return;
                 }
 
                 if (MentionedDatabaseUser.marriedTo) {
@@ -113,11 +115,36 @@ export default class Marry extends SlashCommand {
                             },
                         ],
                     });
+
+                    return;
                 }
 
                 // do the marriage stuff. set both user's and send message;
 
-                break;
+                try {
+                    await this.client.database.editUser(MentionedUser, {
+                        $set: {
+                            marriedTo: CommandUser.id,
+                        },
+                    });
+
+                    await this.client.database.editUser(CommandUser, {
+                        $set: {
+                            marriedTo: MentionedUser.id,
+                        },
+                    });
+
+                    return {
+                        embeds: [
+                            {
+                                description: `<@${CommandUser.id}> and <@${MentionedUser.id}> are now married!`,
+                            },
+                        ],
+                        components: [],
+                    };
+                } catch (e: any) {
+                    throw new Error('Could not update user marriages. ' + e);
+                }
             case this.customIDs.reject:
                 return {
                     embeds: [
@@ -126,97 +153,13 @@ export default class Marry extends SlashCommand {
                         },
                     ],
                 };
-                break;
         }
-
-        // default:
-        //     // The ID of the user that was proposed to.
-        //     const MentionedUserValue = this.client.resolveUser(user);
-        //     if (!MentionedUserValue) return 'Sorry, that user no longer exists';
-
-        //     // The ID of the person that ran the slash command, should be identified in the custom id.
-        //     const OriginalCommandUserId = id.split('_')[2];
-
-        //     console.log(id.split('_'));
-        //     console.log(OriginalCommandUserId);
-        //     // Eris user object of the orignal user.
-        //     const OriginalCommandUser =
-        //         this.client.resolveUser(OriginalCommandUserId);
-
-        //     if (!OriginalCommandUser || !OriginalCommandUserId)
-        //         throw new TypeError('Original user is not defined in custom id.');
-
-        //     // MongoDB database object of orignal user.
-        //     const OriginalCommandDatabaseUser = await this.client.database.getUser(
-        //         OriginalCommandUser
-        //     );
-
-        //     const MentionedDatabaseUser = await this.client.database.getUser(
-        //         MentionedUserValue
-        //     );
-
-        //     if (id.startsWith(this.customIDs.accept)) {
-        //         if (MentionedDatabaseUser.marriedTo) {
-        //             return {
-        //                 embeds: [
-        //                     {
-        //                         description: `Already married to <@${MentionedDatabaseUser.marriedTo}>`,
-        //                     },
-        //                 ],
-        //             };
-        //         }
-
-        //         if (OriginalCommandDatabaseUser.marriedTo) {
-        //             return {
-        //                 embeds: [
-        //                     {
-        //                         description: `Already married to <@${OriginalCommandDatabaseUser.marriedTo}>`,
-        //                     },
-        //                 ],
-        //             };
-        //         }
-
-        //         try {
-        //             await this.client.database.editUser(OriginalCommandUser, {
-        //                 $set: {
-        //                     marriedTo: MentionedUserValue.id,
-        //                 },
-        //             });
-
-        //             await this.client.database.editUser(MentionedUserValue, {
-        //                 $set: {
-        //                     marriedTo: OriginalCommandUser.id,
-        //                 },
-        //             });
-
-        //             return {
-        //                 embeds: [
-        //                     {
-        //                         description: `<@${OriginalCommandUser.id}> and <@${MentionedUserValue.id}> are now married!`,
-        //                     },
-        //                 ],
-        //             };
-        //         } catch (e: any) {
-        //             throw new Error("Could not set user's 'marriedTo' " + e);
-        //         }
-        //     }
-
-        //     if (id.startsWith(this.customIDs.reject)) {
-        //         return {
-        //             embeds: [
-        //                 {
-        //                     description: `<@${MentionedUserValue.id}> has rejected <@${OriginalCommandUser.id}>, sorry!`,
-        //                 },
-        //             ],
-        //         };
-        //     }
-        //     break;
     }
 
     async run(
         interaction: CommandInteraction,
         options: ConvertedCommandOptions
-    ): Promise<AdvancedMessageContent> {
+    ): Promise<AdvancedMessageContent | void> {
         if (!interaction.member) throw new TypeError('No member specified');
 
         // Command should always be ran in guild so this doesn't really matter.
@@ -240,6 +183,17 @@ export default class Marry extends SlashCommand {
             const MentionedDatabaseUser = await this.client.database.getUser(
                 MentionedUserValue
             );
+
+            if (MentionedUserValue.bot) {
+                return {
+                    flags: 64,
+                    embeds: [
+                        {
+                            description: 'You cannot marry a bot!',
+                        },
+                    ],
+                };
+            }
 
             if (MentionedDatabaseUser.marriedTo) {
                 return {
@@ -287,13 +241,120 @@ export default class Marry extends SlashCommand {
             }
         }
         if (options.divorce) {
+            if (!DatabaseUser.marriedTo) {
+                return {
+                    embeds: [
+                        {
+                            description: "You're not married to anybody!",
+                        },
+                    ],
+                };
+            }
+
+            // The user that the command runner is married to.
+            const MarriedUser = this.client.resolveUser(DatabaseUser.marriedTo);
+            if (!MarriedUser) {
+                throw new TypeError('Could not resolve user.');
+            }
+
+            const MarriedDatabaseUser = await this.client.database.getUser(MarriedUser);
+
+            // The other user's married to is undefined or not correct.
+            if (
+                !MarriedDatabaseUser.marriedTo ||
+                MarriedDatabaseUser.marriedTo !== DatabaseUser._id
+            ) {
+                // might check for other errors, but it should not really be possible so shrug. (famous last words);
+                try {
+                    await this.client.database.editUser(interaction.member, {
+                        $set: {
+                            marriedTo: undefined,
+                        },
+                    });
+
+                    return {
+                        embeds: [
+                            {
+                                description:
+                                    "It seems you there was an error in the marriage process, it has been corrected and you're not married.",
+                            },
+                        ],
+                    };
+                } catch (e: any) {
+                    throw new Error('Marriage process gone wrong! ' + e);
+                }
+            }
+
+            // Try to divorce the user.
+            try {
+                await this.client.database.editUser(interaction.member, {
+                    $set: {
+                        marriedTo: undefined,
+                    },
+                });
+
+                await this.client.database.editUser(MarriedUser, {
+                    $set: {
+                        marriedTo: undefined,
+                    },
+                });
+
+                return {
+                    embeds: [
+                        {
+                            description: `You've divorced <@${MarriedUser.id}>.`,
+                        },
+                    ],
+                };
+            } catch (e: any) {
+                throw new Error('Could not divorce users! ' + e);
+            }
+
             // need to make both users 'marriedTo' value to undefined
         }
         if (options.status) {
             // Need to check if there's a user mentioned and if there is show the user their married to, if not make it show the user who ran the command
-            return {
-                embeds: [],
-            };
+            if (options.status.options?.user) {
+                const UserOption = options.status.options.user.user;
+                if (!UserOption) throw new TypeError('User is undefined');
+                const UserDatabaseOption = await this.client.database.getUser(UserOption);
+
+                if (UserDatabaseOption.marriedTo) {
+                    return {
+                        embeds: [
+                            {
+                                description: `<@${UserOption.id}> is married to <@${UserDatabaseOption.marriedTo}>.`,
+                            },
+                        ],
+                    };
+                } else {
+                    return {
+                        embeds: [
+                            {
+                                description: `<@${UserOption.id}> is not married.`,
+                            },
+                        ],
+                    };
+                }
+            } else {
+                if (DatabaseUser.marriedTo) {
+                    return {
+                        embeds: [
+                            {
+                                description: `You're married to <@${DatabaseUser.marriedTo}>`,
+                            },
+                        ],
+                    };
+                } else {
+                    return {
+                        embeds: [
+                            {
+                                description: "You're not married to anybody.",
+                            },
+                        ],
+                    };
+                }
+            }
         }
 
         throw new Error(

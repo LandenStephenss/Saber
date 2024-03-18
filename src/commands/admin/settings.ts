@@ -1,7 +1,12 @@
 import type { AdvancedMessageContent } from 'eris';
 import type { Bot } from '../../structures/Client.js';
 import { SlashCommand } from '../../structures/SlashCommand.js';
-import { ChannelTypes, CommandOption, SlashCommandOptionTypes } from '../../types.js';
+import {
+    ChannelTypes,
+    CommandOption,
+    SlashCommandOptionTypes,
+    SubCommandOption,
+} from '../../types.js';
 
 /**
  * {} = Optional Parameter
@@ -20,7 +25,7 @@ import { ChannelTypes, CommandOption, SlashCommandOptionTypes } from '../../type
  *
  */
 
-const SettingOptions: (CommandOption & { mongoPropName: string })[] = [
+const SettingOptions: (SubCommandOption & { mongoPropName: string })[] = [
     {
         name: 'welcomemsg',
         description: 'Message that gets sent whenever a user joins the guild.',
@@ -29,6 +34,7 @@ const SettingOptions: (CommandOption & { mongoPropName: string })[] = [
         options: [
             {
                 name: 'value',
+                required: true,
                 type: SlashCommandOptionTypes.STRING,
                 description:
                     '{user} = User mention, {userid} = User ID, {guild} = Guild Name, {guildid} = Guild ID.',
@@ -37,6 +43,7 @@ const SettingOptions: (CommandOption & { mongoPropName: string })[] = [
     },
     {
         name: 'leavemsg',
+        required: true,
         description: 'Message that gets sent whenever a user leaves the guild.',
         mongoPropName: 'welcome.leave',
         type: SlashCommandOptionTypes.SUB_COMMAND,
@@ -51,6 +58,7 @@ const SettingOptions: (CommandOption & { mongoPropName: string })[] = [
     },
     {
         name: 'joinleavedm',
+        required: true,
         description: 'Whether or not the user gets a join/leave message in their DMs.',
         mongoPropName: 'welcome.dms',
         type: SlashCommandOptionTypes.SUB_COMMAND,
@@ -64,7 +72,8 @@ const SettingOptions: (CommandOption & { mongoPropName: string })[] = [
         ],
     },
     {
-        name: 'channel',
+        name: 'joinleavechannel',
+        required: true,
         description: 'Channel that join/leave messages will get sent to.',
         mongoPropName: 'welcome.channel',
         type: SlashCommandOptionTypes.SUB_COMMAND,
@@ -72,13 +81,14 @@ const SettingOptions: (CommandOption & { mongoPropName: string })[] = [
             {
                 name: 'value',
                 type: SlashCommandOptionTypes.CHANNEL,
-                channel_types: ChannelTypes.GUILD_TEXT,
+                channel_types: [ChannelTypes.GUILD_TEXT],
                 description: "Channel you'd like join/leave messages to be sent to.",
             },
         ],
     },
     {
         name: 'joinleave',
+        required: true,
         description: 'Whether join/leave messages are enabled or not.',
         mongoPropName: 'welcome.enabled',
         type: SlashCommandOptionTypes.SUB_COMMAND,
@@ -88,6 +98,20 @@ const SettingOptions: (CommandOption & { mongoPropName: string })[] = [
                 type: SlashCommandOptionTypes.BOOLEAN,
                 description:
                     "Whether you'd like to have join/leave messages sent or not.",
+            },
+        ],
+    },
+    {
+        name: 'joinleaverole',
+        required: true,
+        description: 'Role that is applied when a user joins',
+        mongoPropName: 'welcome.role',
+        type: SlashCommandOptionTypes.SUB_COMMAND,
+        options: [
+            {
+                name: 'value',
+                type: SlashCommandOptionTypes.ROLE,
+                description: "Role you'd like to be applied when a user joins",
             },
         ],
     },
@@ -106,7 +130,14 @@ export default class Ping extends SlashCommand {
                     type: SlashCommandOptionTypes.SUB_COMMAND_GROUP,
                     name: 'set',
                     description: 'Set a specific setting.',
-                    options: [],
+                    options: SettingOptions.map(
+                        ({ name, description, type, options, required }) => ({
+                            name,
+                            description,
+                            type,
+                            options,
+                        })
+                    ),
                 },
                 {
                     type: SlashCommandOptionTypes.SUB_COMMAND,

@@ -279,7 +279,7 @@ export type UserOption = {
 } & BaseOption;
 export type ChannelOption = {
     type: SlashCommandOptionTypes.CHANNEL;
-    channel_types: ChannelTypes;
+    channel_types: ChannelTypes[];
 } & BaseOption;
 export type RoleOption = {
     type: SlashCommandOptionTypes.ROLE;
