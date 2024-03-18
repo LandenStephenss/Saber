@@ -1,214 +1,18 @@
 import type { ObjectId } from 'mongodb';
 
-export type Item = AttackItem | PotionItem | ShieldItem | ArmorItem;
-
-export enum AttackItemTypes {
-    SWORD = 'sword',
-    AXE = 'axe',
-    LONG_SWORD = 'long_sword',
-    SHORT_SWORD = 'short_sword',
-    DAGGER = 'dagger',
-    // Bow does not have limited amount of arrows
-    BOW = 'bow',
-    FIST = 'fist', // this value is purely for whenever the user goes into an adventure without a weapon
-}
-
-export type BaseItem = {
-    type?: unknown;
-    name: string;
-    // Price in the store will fluctuate - Not all items are available;
-    minPrice?: number;
-    maxPrice?: number;
-};
-
-// Crit booster of attack items is 10%
-export type AttackItem = {
-    type: AttackItemTypes;
-    damage: number;
-    // Health will be removed whenever a user blocks or attacks.
-    health: number;
-} & BaseItem;
-
-export enum PotionItemTypes {
-    HEALING = 'healing',
-    DAMAGE = 'damage',
-    // Stun potion will stun the enemy making them unable to attack for a short time.
-    STUN = 'stun',
-}
-
-export type PotionItem = {
-    type: PotionItemTypes;
-
-    // Amount of healing that needs to be given;
-    heal: number;
-    // Amount of damage that needs to be given;
-    damage: number;
-    // Level of the slowness potion
-    /**
-     * Level 1: Slowed for 1 move;
-     * Level 2: Slowed for 2 moves;
-     * Level 3: Slowed for 3 moves;
-     */
-    slowness: 1 | 2 | 3;
-} & BaseItem;
-
-export type ShieldItem = {
-    health: number;
-} & BaseItem;
-
-export enum ArmorTypes {
-    HELMET = 'helmet',
-    CHESTPLATE = 'chestplate',
-    PANTS = 'pants',
-    BOOTS = 'boots',
-}
-
-export type ArmorItem = {
-    type: ArmorTypes;
-    health: number;
-} & BaseItem;
-
-export type Adventure = {
-    // Display name of the adventure;
-    name: string;
-    description: string;
-    // Different artwork the adventure may contain;
-    art?: {
-        emoji?: {
-            id?: string;
-            unicode?: string;
-            name?: string;
-        };
-        icon?: unknown;
-        thumbnail?: unknown;
-    };
-    // Enemies on the adventure -- Will only be null if the enemy could not be resolved.
-    enemies: Enemy[];
-
-    // If requirements is not defined then there are none.
-    requirements?: {
-        // Minimum amount of XP a user needs to be allowed to play.
-        minXP?: number;
-        // Maximum XP a user can have to be allowed to play.
-        maxXP?: number;
-        // If it costs the user to start the adventure or not.
-        cost?: number;
-    };
-
-    rewards: {
-        // Maximum amount of gold a player can receive.
-        maxGold: number;
-        // Minimum amount of gold a player can receive.
-        minGold: number;
-        // Maximum amount of experience a player can receive.
-        maxExperience: number;
-        // Minimum amount of experience a player can receive.
-        minExperience: number;
-        // The possible rewards a user can receive for completing the adventure.
-        possibleCompletionRewards: Item[];
-        // Possible failure rewards, given to users so they're not left with nothing; Could also be mixed with completion rewards if completed.
-        possibleRewards: Item[];
-    };
-};
-
-export type Enemy = {
-    health: number;
-    name: string;
-    weapon: AttackItem;
-    // Whether the player is able to obtain the item.
-    // Items are obtainable upon completion.
-    isItemDroppable?: boolean;
-    armor?: {
-        helmet?: ArmorItem & { type: ArmorTypes.HELMET };
-        chestplate?: ArmorItem & { type: ArmorTypes.CHESTPLATE };
-        pants?: ArmorItem & { type: ArmorTypes.PANTS };
-        boots?: ArmorItem & { type: ArmorTypes.BOOTS };
-    };
-};
-
-export type PlayerSkill = {
-    experience: number;
-    level: number;
-};
-
-export type AttackItemState = AttackItem & {
-    currentHealth: number;
-};
-
-export type ArmorItemState = { currentHealth: number } & ArmorItem;
-
-export type AdventureState = {
-    /** Amount of moves that the player has made. */
-    move: number;
-    name: string;
-    equipped: {
-        attack: AttackItemState[];
-        // Armor is not required because not all players will have armor.
-        armor: {
-            helmet?: ArmorItemState & { type: ArmorTypes.HELMET };
-            chestplate?: ArmorItemState & { type: ArmorTypes.CHESTPLATE };
-            pants?: ArmorItemState & { type: ArmorTypes.PANTS };
-            boots?: ArmorItemState & { type: ArmorTypes.BOOTS };
-        };
-    };
-    currentEnemy: {
-        currentHealth: number;
-        currentWeapon: AttackItemState;
-        currentArmor?: {
-            helmet?: ArmorItemState & { type: ArmorTypes.HELMET };
-            chestplate?: ArmorItemState & { type: ArmorTypes.CHESTPLATE };
-            pants?: ArmorItemState & { type: ArmorTypes.PANTS };
-            boots?: ArmorItemState & { type: ArmorTypes.BOOTS };
-        };
-    } & Enemy;
-};
-
 export type DatabaseUserType = {
     _id: string;
-    gold: number;
     experience: number;
     level: number;
     // Command cooldowns
     commandCooldowns?: { [key: string]: number };
     // Different skills a player can have
-    skills?: {
-        mining?: PlayerSkill;
-        fishing?: PlayerSkill;
-        woodcutting?: PlayerSkill;
-    };
+
     pingedGif?: {
         url: string; // must be an Tenor URL (Tenor because that's what Discord uses).
         updatedAt: Date;
         lastSent?: number;
     };
-
-    // Adventure related things;
-    adventures: {
-        inventory: {
-            equipped: {
-                // A user can bring up to 2 attack items.
-                attack?: AttackItem[];
-                // A user can bring multiple potions
-                potion?: PotionItem[];
-                // A user can only have one shield
-                shield?: ShieldItem;
-                // A user can have a full set of armor.
-                armor?: {
-                    helmet?: ArmorItem & { type: ArmorTypes.HELMET };
-                    chestplate?: ArmorItem & { type: ArmorTypes.CHESTPLATE };
-                    pants?: ArmorItem & { type: ArmorTypes.PANTS };
-                    boots?: ArmorItem & { type: ArmorTypes.BOOTS };
-                };
-            };
-            other?: Item[];
-        };
-        currentState?: AdventureState;
-        stats?: {
-            totalAdventures: number;
-            adventuresWon: number;
-        };
-    };
-
     // Discord user id.
     marriedTo?: string;
 };
@@ -475,7 +279,7 @@ export type UserOption = {
 } & BaseOption;
 export type ChannelOption = {
     type: SlashCommandOptionTypes.CHANNEL;
-    channel_types: ChannelTypes;
+    channel_types: ChannelTypes[];
 } & BaseOption;
 export type RoleOption = {
     type: SlashCommandOptionTypes.ROLE;

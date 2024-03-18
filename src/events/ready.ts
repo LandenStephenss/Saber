@@ -23,7 +23,7 @@ export default class Ready extends Event {
                 this.client.localCommands.get(Command.name)!.id = Command.id;
             }
         } catch (e) {
-            throw new Error('Commands could not be edited.');
+            throw new Error('Commands could not be edited. ' + e);
         }
     }
 }

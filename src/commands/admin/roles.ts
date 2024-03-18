@@ -295,10 +295,12 @@ export default class Roles extends SlashCommand {
                             options: ResolvedRoles.map((Role) => ({
                                 label: Role.name,
                                 value: Role.id,
-                                emoji: {
-                                    id: undefined,
-                                    name: Role.unicodeEmoji ?? undefined,
-                                },
+                                // emoji: {
+                                //     id: undefined,
+                                //     name: Role.unicodeEmoji
+                                //         ? Role.unicodeEmoji
+                                //         : undefined,
+                                // },
                             })),
                             max_values: ResolvedRoles.length, // should never be over 25
                         },
@@ -384,10 +386,12 @@ export default class Roles extends SlashCommand {
                                 options: ResolvedRoles.map((Role) => ({
                                     label: Role.name,
                                     value: Role.id,
-                                    emoji: {
-                                        id: undefined,
-                                        name: Role.unicodeEmoji ?? undefined,
-                                    },
+                                    // emoji: {
+                                    //     id: undefined,
+                                    //     name: Role.unicodeEmoji
+                                    //         ? Role.unicodeEmoji
+                                    //         : undefined,
+                                    // },
                                 })),
                                 max_values: ResolvedRoles.length, // should never be over 25
                             },

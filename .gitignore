@@ -8,3 +8,6 @@ node_modules
 package-lock.json
 # in here be cause i write test code in it a lot pls ignore this one
 test.js
+
+# F u macOS
+.DS_Store
