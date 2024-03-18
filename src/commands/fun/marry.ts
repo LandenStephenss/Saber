@@ -205,7 +205,7 @@ export default class Marry extends SlashCommand {
                 };
             } else if (interaction.member.id === MentionedUserValue.id) {
                 return {
-                    content: 'You cannot marry yourself!',
+                    content: 'You cannot marry yoursenpmlf!',
                     flags: 64,
                 };
             } else {
