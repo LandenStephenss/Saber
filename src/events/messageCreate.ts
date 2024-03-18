@@ -8,7 +8,7 @@ export default class MessageCreate extends Event {
 
         if (message.mentions.length > 0) {
             for (const mention of message.mentions) {
-                if (mention.id === message.id) continue;
+                if (mention.id === message.member.id) continue;
                 const DatabaseUser = await this.client.database.getUser(mention);
                 if (
                     !DatabaseUser.pingedGif ||

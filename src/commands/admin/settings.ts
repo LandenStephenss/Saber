@@ -131,7 +131,7 @@ export default class Ping extends SlashCommand {
                     name: 'set',
                     description: 'Set a specific setting.',
                     options: SettingOptions.map(
-                        ({ name, description, type, options, required }) => ({
+                        ({ name, description, type, options }) => ({
                             name,
                             description,
                             type,
