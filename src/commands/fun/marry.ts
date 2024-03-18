@@ -3,7 +3,6 @@ import {
     CommandInteraction,
     ComponentInteraction,
     GuildTextableChannel,
-    InteractionContent,
     InteractionContentEdit,
 } from 'eris';
 import type { Bot } from '../../structures/Client.js';

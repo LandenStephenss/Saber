@@ -297,7 +297,11 @@ export default class InteractionCreate extends Event {
                 );
             }
 
-            if (ParsedCustomId.user !== interaction.member!.id) {
+            if (
+                ParsedCustomId.user !== interaction.member!.id &&
+                // Check if it includes the user's ID, if it does they are allowed to use it.
+                !ParsedCustomId.id.includes(interaction.member!.id)
+            ) {
                 await interaction.createFollowup({
                     content: `You cannot interact with this message. Run </${Command.slashCommandData.name}:${Command.id}>`,
                     flags: 64,
