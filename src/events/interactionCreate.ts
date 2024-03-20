@@ -12,6 +12,7 @@ import type {
     InteractionDataOptionWithValue,
     InteractionDataOptionsSubCommand,
     ComponentInteractionSelectMenuData,
+    Channel,
 } from 'eris';
 import { Event } from '../structures/Event.js';
 import {
@@ -34,6 +35,8 @@ export type ConvertedCommandOptions = {
         value?: unknown;
         // Used for user type;
         user?: User;
+        // Used for channel type
+        channel?: Channel;
         // Used for sub commands;
         options?: ConvertedCommandOptions;
         /**
@@ -530,7 +533,12 @@ export default class InteractionCreate extends Event {
                     };
                     break;
                 case SlashCommandOptionTypes.CHANNEL:
-                    throw new Error('Channel type has not been handled properly yet.');
+                    console.log(option.value);
+                    ConvertedOptions[option.name] = {
+                        value: option.value,
+                        type: option.type,
+                        channel: undefined, // todo;
+                    };
                     break;
                 case SlashCommandOptionTypes.ROLE:
                     throw new Error('Role type has not been handled properly yet.');

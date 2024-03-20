@@ -30,12 +30,17 @@ import { ConvertedCommandOptions } from '../../events/interactionCreate.js';
  *
  */
 
-const SettingOptions: (SubCommandOption & { mongoPropName: string; id: string })[] = [
+const SettingOptions: (SubCommandOption & {
+    mongoPropName: string;
+    id: string;
+    defaultValue: string | boolean | undefined;
+})[] = [
     {
         name: 'Welcome Message',
         id: 'welcomemsg',
         description: 'Message that gets sent whenever a user joins the guild.',
         mongoPropName: 'welcome.join',
+        defaultValue: undefined,
         type: SlashCommandOptionTypes.SUB_COMMAND,
         options: [
             {
@@ -52,6 +57,7 @@ const SettingOptions: (SubCommandOption & { mongoPropName: string; id: string })
         id: 'leavemsg',
         description: 'Message that gets sent whenever a user leaves the guild.',
         mongoPropName: 'welcome.leave',
+        defaultValue: undefined,
         type: SlashCommandOptionTypes.SUB_COMMAND,
         options: [
             {
@@ -68,6 +74,7 @@ const SettingOptions: (SubCommandOption & { mongoPropName: string; id: string })
         id: 'joinleavedm',
         description: 'Whether or not the user gets a join/leave message in their DMs.',
         mongoPropName: 'welcome.dms',
+        defaultValue: false,
         type: SlashCommandOptionTypes.SUB_COMMAND,
         options: [
             {
@@ -83,6 +90,7 @@ const SettingOptions: (SubCommandOption & { mongoPropName: string; id: string })
         id: 'joinleavechannel',
         description: 'Channel that join/leave messages will get sent to.',
         mongoPropName: 'welcome.channel',
+        defaultValue: undefined,
         type: SlashCommandOptionTypes.SUB_COMMAND,
         options: [
             {
@@ -98,6 +106,7 @@ const SettingOptions: (SubCommandOption & { mongoPropName: string; id: string })
         id: 'joinleave',
         description: 'Whether join/leave messages are enabled or not.',
         mongoPropName: 'welcome.enabled',
+        defaultValue: false,
         type: SlashCommandOptionTypes.SUB_COMMAND,
         options: [
             {
@@ -113,6 +122,7 @@ const SettingOptions: (SubCommandOption & { mongoPropName: string; id: string })
         id: 'joinleaverole',
         description: 'Role that is applied when a user joins',
         mongoPropName: 'welcome.role',
+        defaultValue: undefined,
         type: SlashCommandOptionTypes.SUB_COMMAND,
         options: [
             {
@@ -172,6 +182,33 @@ export default class Ping extends SlashCommand {
         });
     }
 
+    private fetchProp(propName: string, obj: any) {
+        let prop = obj;
+
+        propName.split('.').forEach((e: string) => {
+            prop = prop[e];
+        });
+
+        return prop;
+    }
+
+    private readableSettingValue(
+        opt: SubCommandOption & { mongoPropName: string; id: string },
+        value: string | boolean | undefined
+    ): string {
+        if (!value) return '*Not Set*';
+
+        switch (opt.options[0].type) {
+            case SlashCommandOptionTypes.CHANNEL:
+                return `<#${value.toString()}>`;
+
+            case SlashCommandOptionTypes.ROLE:
+                return `<@&${value.toString()}>`;
+            default:
+                return `\`${value.toString()}\``;
+        }
+    }
+
     async run(
         interaction: CommandInteraction<GuildTextableChannel>,
         options: ConvertedCommandOptions
@@ -179,7 +216,7 @@ export default class Ping extends SlashCommand {
         if (options.set) {
             const optionName = Object.keys(options.set.options!)[0];
             const optionValue = options.set.options![optionName].options!.value.value;
-            const { mongoPropName } = SettingOptions.find((o) => o.name === optionName)!;
+            const option = SettingOptions.find((o) => o.id === optionName)!;
 
             try {
                 const guild = this.client.resolveGuild(interaction.guildID!);
@@ -191,7 +228,7 @@ export default class Ping extends SlashCommand {
 
                 const toUpdate: any = {};
 
-                toUpdate[mongoPropName] = optionValue;
+                toUpdate[option.mongoPropName] = optionValue;
 
                 await this.client.database.editGuild(guild, {
                     $set: toUpdate,
@@ -200,7 +237,10 @@ export default class Ping extends SlashCommand {
                 return {
                     embeds: [
                         {
-                            description: `${optionName} has been updated to \`${optionValue}\``,
+                            description: `${optionName} has been updated to ${this.readableSettingValue(
+                                option,
+                                optionValue as string | boolean | undefined
+                            )}`,
                         },
                     ],
                 };
@@ -217,16 +257,30 @@ export default class Ping extends SlashCommand {
             return {
                 embeds: [
                     {
-                        title: `${guild.name}'s settings!`,
+                        author: {
+                            icon_url: this.client.user.dynamicAvatarURL() ?? undefined,
+                            name: `${guild.name}'s settings!`,
+                        },
+                        description: `To change a setting run </${this.slashCommandData.name} set:${this.id}>.`,
                         fields: SettingOptions.map((opt) => {
                             // need to get setting value;
 
+                            const value = this.fetchProp(
+                                opt.mongoPropName,
+                                DatabaseGuild
+                            );
+
                             return {
                                 name: `__${opt.name}__ (${opt.id})`,
-                                value: 'WIP;',
+                                value: this.readableSettingValue(opt, value),
                                 inline: true,
                             };
                         }),
+                        timestamp: new Date(),
+                        footer: {
+                            text: `${guild.name}'s guild settings`,
+                            icon_url: guild.dynamicIconURL() ?? undefined,
+                        },
                     },
                 ],
             };
