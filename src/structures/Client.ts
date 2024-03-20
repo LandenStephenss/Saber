@@ -46,6 +46,10 @@ export class Bot extends Client {
         );
     }
 
+    public resolveGuild(guild: string) {
+        return this.guilds.get(/<@!?(\d+)>/g.exec(guild)?.[1] ?? guild);
+    }
+
     public awaitComponentInteraction(
         filter: (interaction: ComponentInteraction) => boolean,
         timeout: number = 60000

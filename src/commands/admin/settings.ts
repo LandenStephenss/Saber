@@ -1,4 +1,8 @@
-import type { AdvancedMessageContent } from 'eris';
+import type {
+    AdvancedMessageContent,
+    CommandInteraction,
+    GuildTextableChannel,
+} from 'eris';
 import type { Bot } from '../../structures/Client.js';
 import { SlashCommand } from '../../structures/SlashCommand.js';
 import {
@@ -7,6 +11,7 @@ import {
     SlashCommandOptionTypes,
     SubCommandOption,
 } from '../../types.js';
+import { ConvertedCommandOptions } from '../../events/interactionCreate.js';
 
 /**
  * {} = Optional Parameter
@@ -25,9 +30,10 @@ import {
  *
  */
 
-const SettingOptions: (SubCommandOption & { mongoPropName: string })[] = [
+const SettingOptions: (SubCommandOption & { mongoPropName: string; id: string })[] = [
     {
-        name: 'welcomemsg',
+        name: 'Welcome Message',
+        id: 'welcomemsg',
         description: 'Message that gets sent whenever a user joins the guild.',
         mongoPropName: 'welcome.join',
         type: SlashCommandOptionTypes.SUB_COMMAND,
@@ -42,14 +48,15 @@ const SettingOptions: (SubCommandOption & { mongoPropName: string })[] = [
         ],
     },
     {
-        name: 'leavemsg',
-        required: true,
+        name: 'Leave Message',
+        id: 'leavemsg',
         description: 'Message that gets sent whenever a user leaves the guild.',
         mongoPropName: 'welcome.leave',
         type: SlashCommandOptionTypes.SUB_COMMAND,
         options: [
             {
                 name: 'value',
+                required: true,
                 type: SlashCommandOptionTypes.STRING,
                 description:
                     '{user} = User mention, {userid} = User ID, {guild} = Guild Name, {guildid} = Guild ID',
@@ -57,8 +64,8 @@ const SettingOptions: (SubCommandOption & { mongoPropName: string })[] = [
         ],
     },
     {
-        name: 'joinleavedm',
-        required: true,
+        name: 'Send DM on Join/Leave',
+        id: 'joinleavedm',
         description: 'Whether or not the user gets a join/leave message in their DMs.',
         mongoPropName: 'welcome.dms',
         type: SlashCommandOptionTypes.SUB_COMMAND,
@@ -72,8 +79,8 @@ const SettingOptions: (SubCommandOption & { mongoPropName: string })[] = [
         ],
     },
     {
-        name: 'joinleavechannel',
-        required: true,
+        name: 'Join/Leave Channel',
+        id: 'joinleavechannel',
         description: 'Channel that join/leave messages will get sent to.',
         mongoPropName: 'welcome.channel',
         type: SlashCommandOptionTypes.SUB_COMMAND,
@@ -87,8 +94,8 @@ const SettingOptions: (SubCommandOption & { mongoPropName: string })[] = [
         ],
     },
     {
-        name: 'joinleave',
-        required: true,
+        name: 'Join/Leave Messages',
+        id: 'joinleave',
         description: 'Whether join/leave messages are enabled or not.',
         mongoPropName: 'welcome.enabled',
         type: SlashCommandOptionTypes.SUB_COMMAND,
@@ -102,8 +109,8 @@ const SettingOptions: (SubCommandOption & { mongoPropName: string })[] = [
         ],
     },
     {
-        name: 'joinleaverole',
-        required: true,
+        name: 'Join/Leave Role',
+        id: 'joinleaverole',
         description: 'Role that is applied when a user joins',
         mongoPropName: 'welcome.role',
         type: SlashCommandOptionTypes.SUB_COMMAND,
@@ -130,34 +137,28 @@ export default class Ping extends SlashCommand {
                     type: SlashCommandOptionTypes.SUB_COMMAND_GROUP,
                     name: 'set',
                     description: 'Set a specific setting.',
-                    options: SettingOptions.map(
-                        ({ name, description, type, options }) => ({
-                            name,
-                            description,
-                            type,
-                            options,
-                        })
-                    ),
+                    options: SettingOptions.map(({ id, description, type, options }) => ({
+                        name: id,
+                        description,
+                        type,
+                        options: options.map((option) => ({
+                            ...option,
+                            required: true,
+                        })),
+                    })),
                 },
                 {
                     type: SlashCommandOptionTypes.SUB_COMMAND,
                     name: 'view',
                     description: 'View a current setting value.',
-                    options: [
-                        {
-                            type: SlashCommandOptionTypes.STRING,
-                            name: 'setting',
-                            description: "Setting you'd like to see",
-                            autocomplete: true,
-                            required: true,
-                        },
-                    ],
+                    options: [],
                 },
                 {
                     type: SlashCommandOptionTypes.SUB_COMMAND,
                     name: 'reset',
                     description: 'Reset a setting value.',
                     options: [
+                        // make this the same as the set options, except not required
                         {
                             type: SlashCommandOptionTypes.STRING,
                             name: 'setting',
@@ -171,9 +172,64 @@ export default class Ping extends SlashCommand {
         });
     }
 
-    run(): AdvancedMessageContent {
-        return {
-            content: 'todo',
-        };
+    async run(
+        interaction: CommandInteraction<GuildTextableChannel>,
+        options: ConvertedCommandOptions
+    ): Promise<AdvancedMessageContent | void> {
+        if (options.set) {
+            const optionName = Object.keys(options.set.options!)[0];
+            const optionValue = options.set.options![optionName].options!.value.value;
+            const { mongoPropName } = SettingOptions.find((o) => o.name === optionName)!;
+
+            try {
+                const guild = this.client.resolveGuild(interaction.guildID!);
+                if (!guild) {
+                    return {
+                        content: 'what',
+                    };
+                }
+
+                const toUpdate: any = {};
+
+                toUpdate[mongoPropName] = optionValue;
+
+                await this.client.database.editGuild(guild, {
+                    $set: toUpdate,
+                });
+
+                return {
+                    embeds: [
+                        {
+                            description: `${optionName} has been updated to \`${optionValue}\``,
+                        },
+                    ],
+                };
+            } catch (e: any) {
+                throw new Error(e);
+            }
+        }
+
+        if (options.view) {
+            const guild = this.client.resolveGuild(interaction.guildID!);
+            if (!guild) throw new Error('Command was not ran in a guild');
+            const DatabaseGuild = await this.client.database.getGuild(guild);
+
+            return {
+                embeds: [
+                    {
+                        title: `${guild.name}'s settings!`,
+                        fields: SettingOptions.map((opt) => {
+                            // need to get setting value;
+
+                            return {
+                                name: `__${opt.name}__ (${opt.id})`,
+                                value: 'WIP;',
+                                inline: true,
+                            };
+                        }),
+                    },
+                ],
+            };
+        }
     }
 }
