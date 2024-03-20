@@ -205,7 +205,7 @@ export class Database {
     ): Promise<DatabaseGuildType> {
         try {
             await this.ensureGuild(guild);
-            await this.users.updateOne({ _id: guild.id }, changes, {
+            await this.guilds.updateOne({ _id: guild.id }, changes, {
                 comment: `Updated by Discord Bot. (${config.applicationId})`,
             });
             return await this.getGuild(guild);

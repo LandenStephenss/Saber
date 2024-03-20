@@ -30,6 +30,7 @@ export type ConvertedCommandOptions = {
     [key: string]: {
         // Type of command option
         type: SlashCommandOptionTypes;
+        name?: string;
         value?: unknown;
         // Used for user type;
         user?: User;
@@ -493,9 +494,11 @@ export default class InteractionCreate extends Event {
                     };
                     break;
                 case SlashCommandOptionTypes.SUB_COMMAND_GROUP:
-                    throw new Error(
-                        'Sub command group type has not been handled properly yet.'
-                    );
+                    ConvertedOptions[option.name] = {
+                        type: option.type,
+                        options: this.parseInteractionOptions(option.options ?? []),
+                        name: option.name,
+                    };
                     break;
                 case SlashCommandOptionTypes.STRING:
                     ConvertedOptions[option.name] = {
