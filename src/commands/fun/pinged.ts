@@ -54,18 +54,6 @@ export default class Pinged extends SlashCommand {
 
             return {
                 content: DatabaseUser.pingedGif.url,
-                // todo; figure out how to fetch the image and send it in an embed for cleaner responses.
-                // embeds: [
-                //     {
-                //         title: 'Current Pinged GIF.',
-                //         image: {
-                //             url: DatabaseUser.pingedGif.url,
-                //         },
-                //         footer: {
-                //             text: `Last updated at: ${DatabaseUser.pingedGif.updatedAt}`,
-                //         },
-                //     },
-                // ],
             };
         }
 

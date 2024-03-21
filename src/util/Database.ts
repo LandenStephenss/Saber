@@ -16,7 +16,6 @@ import {
 import type { Guild, User, Member } from 'eris';
 import { CronJob } from 'cron';
 import type { Bot } from '../structures/Client.js';
-import logger from './logger.js';
 
 export class DatabaseUser {
     experience = 0;
@@ -31,6 +30,9 @@ export class DatabaseGuild {
     };
 
     constructor(public _id: string) {}
+
+    // todo; autofill settings like roles
+    autofillSettings(guild: Guild) {}
 }
 
 export class Database {
@@ -255,8 +257,7 @@ export class Database {
                 this.handleUnban(task);
                 break;
             case TaskTypes.UNMUTE:
-                // todo;
-                logger.info('unmute user');
+                this.handleUnmute(task);
                 break;
             default:
                 throw new Error(
@@ -334,7 +335,7 @@ export class Database {
     }
 
     handleUnban(task: DatabaseTask) {
-        const Guild = this.client.guilds.find((guild) => guild.id === task.guild);
+        const Guild = this.client.resolveGuild(task.guild);
         if (!Guild) {
             throw new Error('Could not unban user.');
         }
@@ -343,12 +344,28 @@ export class Database {
                 task.user,
                 `Automatically unbanned by ${this.client.user.username}#${this.client.user.discriminator} (${this.client.user.id})`
             );
+
+            this.deleteTask(task);
         } catch (e) {
-            throw new Error('Could not edit task ' + e);
+            throw new Error('Could not unban user ' + e);
         }
     }
 
-    handleUnmute(task: DatabaseTask) {
-        // todo; fetch mute role.
+    async handleUnmute(task: DatabaseTask) {
+        const Guild = this.client.resolveGuild(task.guild);
+        if (!Guild) {
+            throw new Error('Could not find guild to unmute user.');
+        }
+
+        try {
+            const DatabaseGuild = await this.getGuild(Guild);
+
+            if (!DatabaseGuild.moderation.roles.muted)
+                throw new TypeError('No mute role specified, could not unmute user.');
+
+            Guild.removeMemberRole(task.user, DatabaseGuild.moderation.roles.muted);
+        } catch (e) {
+            throw new Error('Could not edit task ' + e);
+        }
     }
 }

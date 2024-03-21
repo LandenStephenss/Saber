@@ -19,32 +19,24 @@ pm2 start ./dist/main.js --name "Saber" --watch --ext .js -c "0 0 * * *"
 
 ## TO-DO List:
 
--   [ ] Join/Leave messages.
-    -   [ ] Configurable through admin commands.
+-   [x] Join/Leave messages.
+
+    -   [x] Configurable through admin commands.
     -   [x] Send a message to a specific channel.
     -   [x] Send a DM to the user.
+
 -   [x] Role menu allowing users to select self-assignable roles.
+
     -   [x] Admin setup command
     -   [x] Assigning users roles picked.
+
 -   [x] Keyword GIF (Send a gif upon a keyword).
+
     -   [x] Setup using a command
     -   [x] Send a GIF when keyword is sent.
--   [ ] Economy (**Gold Coins**)
-    -   [ ] Shop System
-    -   [ ] Trading with other users
-    -   [x] Balance Command
--   [ ] Skills
-    -   [ ] Chance to gain items whenever training skills.
-    -   [ ] Skills leaderboard.
--   [ ] Marriage
-    -   [ ] Allow users to marry other users.
-    -   [ ] Marriage based events, children, child death, etc.
--   [ ] Adventures
-    -   [x] View a list of all adventures.
-    -   [ ] Play an adventure.
-    -   [x] Configure each adventure via the `adventures.ts` file.
-    -   [ ] Scale adventure/enemy difficulty with the users level.
+
 -   [x] Interaction Handling
+
     -   [x] Commands
         -   [x] Cooldowns
         -   [x] Permissions
@@ -53,11 +45,28 @@ pm2 start ./dist/main.js --name "Saber" --watch --ext .js -c "0 0 * * *"
         -   [x] Parse and update component `custom_id`'s when sending/receiving data.
     -   [x] Autocomplete
     -   [ ] Modal Submit
--   [ ] Moderation Commands
-    -   [ ] Kick/(Soft)ban.
-    -   [ ] Mute.
-        -   [ ] Configurable through admin commands (setting `mute` role).
+
+-   [ ] Commands
+
+    -   [ ] Fun Commands
+        -   [x] Marry (Lets user's marry eachother, user specific)
+        -   [x] Pinged (When a user is pinged the bot sends a GIF that the user set)
+        -   [ ] 8ball (Just an 8ball command)
+    -   [ ] Moderation Commands
+        -   [ ] Kick (Kick a user from the guild)
+        -   [ ] Mute (Mute a user either permanently or with a time)
+        -   [ ] Ban (Ban a user, also give a time period)
+    -   [x] Admin
+        -   [x] Settings (lets admins configure settings)
+        -   [x] Roles (lets admins configure user selectable roles)
+    -   [x] Information Commands
+        -   [x] help (Shows all the bots commands)
+        -   [x] ping (Shows the bot's ping to Discord)
+        -   [x] status (Shows the status of the bot)
+        -   [x] avatar (Shows the avatar of a user.)
+
 -   [ ] Database things
+
     -   [x] Add, Delete, and Edit users from database through code.
     -   [ ] Automatically find usable channels and roles in the guild upon joining.
 
