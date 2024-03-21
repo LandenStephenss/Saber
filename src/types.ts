@@ -88,9 +88,6 @@ export enum ModLogTypes {
 export enum TaskTypes {
     UNBAN = 1,
     UNMUTE = 2,
-    // Other RPG event things here.
-
-    ADVENTURE_REMINDER = 3, // Remind a user that they have an on-going adventure after a couple hours of inactivity.
 }
 
 export type DatabaseTask = SimpleTask;
@@ -112,10 +109,6 @@ export type SimpleTask = {
     // Guild that it needs to happen in.
     guild: string;
 };
-
-export type ReminderTask = {
-    type: TaskTypes.ADVENTURE_REMINDER;
-} & SimpleTask;
 
 export enum MessageComponentTypes {
     ACTION_ROW = 1,
