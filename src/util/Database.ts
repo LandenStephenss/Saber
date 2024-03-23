@@ -30,10 +30,10 @@ export class DatabaseGuild {
     };
 
     constructor(public _id: string) {}
-
-    // todo; autofill settings like roles
-    autofillSettings(guild: Guild) {}
 }
+
+// TODO; populate guild settings from an array of settings that can be auto populated;
+function autoPopulateGuildSettings(guild: Guild) {}
 
 export class Database {
     private users!: Collection<DatabaseUserType>;
@@ -166,7 +166,7 @@ export class Database {
             return ExistingGuild;
         }
 
-        const NewGuild: DatabaseGuildType = new DatabaseGuild(guild.id);
+        const NewGuild = new DatabaseGuild(guild.id);
 
         try {
             await this.guilds.insertOne(NewGuild);
