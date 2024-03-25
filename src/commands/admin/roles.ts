@@ -9,7 +9,7 @@ import type { Bot } from '../../structures/Client.js';
 import { SlashCommand } from '../../structures/SlashCommand.js';
 import { MessageComponentButtonStyles, MessageComponentTypes } from '../../types.js';
 
-export default class Roles extends SlashCommand {
+export default class ReactionRoles extends SlashCommand {
     componentCustomIDs = {
         roleSelect: 'roleselect',
         roleConfirm: 'rolesconfirm',
@@ -25,7 +25,7 @@ export default class Roles extends SlashCommand {
 
     constructor(public client: Bot) {
         super({
-            name: 'roles',
+            name: 'reactionroles',
             description: 'Setup self assignable roles.',
             category: 'admin',
             defaultMemberPermissions: 1 << 28,
