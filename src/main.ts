@@ -7,6 +7,7 @@ const Client = new Bot({
     defaultImageSize: 1024,
     restMode: true,
     getAllUsers: true,
+    maxShards: 'auto',
 });
 
 Client.start();
