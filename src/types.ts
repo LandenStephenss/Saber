@@ -59,6 +59,7 @@ export type DatabaseGuildType = {
             /**
              *  Wheter we want to detect spam or not.
              *  The things we will be looking for are as following
+             * - Duplicate messages being sent
              * -
              */
             spamDetection: boolean;

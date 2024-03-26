@@ -2,7 +2,6 @@ import type {
     AdvancedMessageContent,
     CommandInteraction,
     ComponentInteraction,
-    ComponentInteractionSelectMenuData,
     GuildTextableChannel,
     InteractionContentEdit,
     TextableChannel,
@@ -277,154 +276,15 @@ export default class Ping extends SlashCommand {
         }
     }
 
-    // btw this is an absolute shit show that really needs done in a better way but i cbf rn.
-    // @ts-expect-error cuz of weird type 3 thing
-    async handleMessageComponent(
-        interaction: ComponentInteraction,
-        { id }: parsedCustomId
-    ) {
-        const guild = this.client.resolveGuild(interaction.guildID!);
-        if (!guild) throw new Error('Command was not ran in a guild');
-        const DatabaseGuild = await this.client.database.getGuild(guild);
-
-        switch (id) {
-            case this.customIds.filter:
-                const value = (interaction.data as ComponentInteractionSelectMenuData)
-                    .values[0];
-
-                if (value === 'all') {
-                    return {
-                        components: [
-                            {
-                                type: MessageComponentTypes.ACTION_ROW,
-                                components: [
-                                    {
-                                        type: MessageComponentTypes.STRING_SELECT,
-                                        custom_id: this.customIds.filter,
-                                        options: [
-                                            {
-                                                label: 'All Setting Types',
-                                                value: 'all',
-                                            },
-                                            ...SettingCategorys.map((str) => ({
-                                                label: str,
-                                                value: str,
-                                            })),
-                                        ],
-                                    },
-                                ],
-                            },
-                        ],
-                        embeds: [
-                            {
-                                author: {
-                                    icon_url:
-                                        this.client.user.dynamicAvatarURL() ?? undefined,
-                                    name: `${guild.name}'s settings!`,
-                                },
-                                description: `To change a setting run </${
-                                    this.slashCommandData.name
-                                } set:${this.id}>.\n\n${SettingCategorys.map(
-                                    (cat) =>
-                                        `### ${cat}\n${SettingOptions.filter(
-                                            (r) => r.category === cat
-                                        )
-                                            .map((opt) => {
-                                                const prop = this.fetchProp(
-                                                    opt.mongoPropName,
-                                                    DatabaseGuild
-                                                );
-
-                                                return `- __${opt.name}__ *(${
-                                                    opt.id
-                                                })* - ${
-                                                    opt.description
-                                                }\n<:reply:1222053196118102018> ${this.readableSettingValue(
-                                                    opt,
-                                                    prop
-                                                )}`;
-                                            })
-                                            .join('\n')}`
-                                ).join('\n\n')}`,
-                                timestamp: new Date(),
-                                footer: {
-                                    text: `${guild.name}'s guild settings`,
-                                    icon_url: guild.dynamicIconURL() ?? undefined,
-                                },
-                            },
-                        ],
-                    };
-                } else {
-                    return {
-                        components: [
-                            {
-                                type: MessageComponentTypes.ACTION_ROW,
-                                components: [
-                                    {
-                                        type: MessageComponentTypes.STRING_SELECT,
-                                        custom_id: this.customIds.filter,
-                                        options: [
-                                            {
-                                                label: 'All Setting Types',
-                                                value: 'all',
-                                            },
-                                            ...SettingCategorys.map((str) => ({
-                                                label: str,
-                                                value: str,
-                                            })),
-                                        ],
-                                    },
-                                ],
-                            },
-                        ],
-                        embeds: [
-                            {
-                                author: {
-                                    icon_url:
-                                        this.client.user.dynamicAvatarURL() ?? undefined,
-                                    name: `${guild.name}'s settings!`,
-                                },
-                                description: `To change a setting run </${
-                                    this.slashCommandData.name
-                                } set:${this.id}>.\n\n${SettingCategorys.filter(
-                                    (c) => c === value
-                                )
-                                    .map(
-                                        (cat) =>
-                                            `### ${cat}\n${SettingOptions.filter(
-                                                (r) => r.category === cat
-                                            )
-                                                .map((opt) => {
-                                                    const prop = this.fetchProp(
-                                                        opt.mongoPropName,
-                                                        DatabaseGuild
-                                                    );
-
-                                                    return `- __${opt.name}__ *(${
-                                                        opt.id
-                                                    })* - ${
-                                                        opt.description
-                                                    }\n<:reply:1222053196118102018> ${this.readableSettingValue(
-                                                        opt,
-                                                        prop
-                                                    )}`;
-                                                })
-                                                .join('\n')}`
-                                    )
-                                    .join('\n\n')}`,
-                                timestamp: new Date(),
-                                footer: {
-                                    text: `${guild.name}'s ${value} settings`,
-                                    icon_url: guild.dynamicIconURL() ?? undefined,
-                                },
-                            },
-                        ],
-                    };
-                }
-
-                break;
-        }
-    }
+    // handleMessageComponent(
+    //     interaction: ComponentInteraction<GuildTextableChannel>,
+    //     { id }: parsedCustomId
+    // ) {
+    //     switch (id) {
+    //         case this.customIds.filter:
+    //             break;
+    //     }
+    // }
 
     async run(
         interaction: CommandInteraction<GuildTextableChannel>,
@@ -483,7 +343,7 @@ export default class Ping extends SlashCommand {
                                 custom_id: this.customIds.filter,
                                 options: [
                                     {
-                                        label: 'All Setting Types',
+                                        label: 'All Settings',
                                         value: 'all',
                                     },
                                     ...SettingCategorys.map((str) => ({
@@ -523,6 +383,20 @@ export default class Ping extends SlashCommand {
                                     })
                                     .join('\n')}`
                         ).join('\n\n')}`,
+                        // fields: SettingOptions.map((opt) => {
+                        //     // need to get setting value;
+
+                        //     const value = this.fetchProp(
+                        //         opt.mongoPropName,
+                        //         DatabaseGuild
+                        //     );
+
+                        //     return {
+                        //         name: `__${opt.name}__ (${opt.id})`,
+                        //         value: this.readableSettingValue(opt, value),
+                        //         inline: true,
+                        //     };
+                        // }),
                         timestamp: new Date(),
                         footer: {
                             text: `${guild.name}'s guild settings`,
