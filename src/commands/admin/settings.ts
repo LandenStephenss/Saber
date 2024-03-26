@@ -5,14 +5,8 @@ import type {
 } from 'eris';
 import type { Bot } from '../../structures/Client.js';
 import { SlashCommand } from '../../structures/SlashCommand.js';
-import {
-    ChannelTypes,
-    CommandOption,
-    SlashCommandOptionTypes,
-    SubCommandOption,
-} from '../../types.js';
+import { ChannelTypes, SlashCommandOptionTypes, SubCommandOption } from '../../types.js';
 import { ConvertedCommandOptions } from '../../events/interactionCreate.js';
-
 /**
  * {} = Optional Parameter
  * [] = Required Pareter
@@ -30,14 +24,17 @@ import { ConvertedCommandOptions } from '../../events/interactionCreate.js';
  *
  */
 
+// TODO; add categorys and sort them in the description + make it look good.
 const SettingOptions: (SubCommandOption & {
     mongoPropName: string;
     id: string;
     defaultValue: string | boolean | undefined;
+    category: string;
 })[] = [
     {
         name: 'Welcome Message',
         id: 'welcomemsg',
+        category: 'Join/Leave Messages',
         description: 'Message that gets sent whenever a user joins the guild.',
         mongoPropName: 'welcome.join',
         defaultValue: undefined,
@@ -55,6 +52,7 @@ const SettingOptions: (SubCommandOption & {
     {
         name: 'Leave Message',
         id: 'leavemsg',
+        category: 'Join/Leave Messages',
         description: 'Message that gets sent whenever a user leaves the guild.',
         mongoPropName: 'welcome.leave',
         defaultValue: undefined,
@@ -72,6 +70,7 @@ const SettingOptions: (SubCommandOption & {
     {
         name: 'Send DM on Join/Leave',
         id: 'joinleavedm',
+        category: 'Join/Leave Messages',
         description: 'Whether or not the user gets a join/leave message in their DMs.',
         mongoPropName: 'welcome.dms',
         defaultValue: false,
@@ -88,6 +87,7 @@ const SettingOptions: (SubCommandOption & {
     {
         name: 'Join/Leave Channel',
         id: 'joinleavechannel',
+        category: 'Join/Leave Messages',
         description: 'Channel that join/leave messages will get sent to.',
         mongoPropName: 'welcome.channel',
         defaultValue: undefined,
@@ -104,6 +104,7 @@ const SettingOptions: (SubCommandOption & {
     {
         name: 'Join/Leave Messages',
         id: 'joinleave',
+        category: 'Join/Leave Messages',
         description: 'Whether join/leave messages are enabled or not.',
         mongoPropName: 'welcome.enabled',
         defaultValue: false,
@@ -120,6 +121,7 @@ const SettingOptions: (SubCommandOption & {
     {
         name: 'Join/Leave Role',
         id: 'joinleaverole',
+        category: 'Join/Leave Messages',
         description: 'Role that is applied when a user joins',
         mongoPropName: 'welcome.role',
         defaultValue: undefined,
@@ -129,6 +131,38 @@ const SettingOptions: (SubCommandOption & {
                 name: 'value',
                 type: SlashCommandOptionTypes.ROLE,
                 description: "Role you'd like to be applied when a user joins",
+            },
+        ],
+    },
+    {
+        name: 'Muted Role',
+        id: 'muterole',
+        category: 'Moderation Roles',
+        description: 'Role to mute people',
+        mongoPropName: 'moderation.roles.muted',
+        defaultValue: undefined,
+        type: SlashCommandOptionTypes.SUB_COMMAND,
+        options: [
+            {
+                name: 'value',
+                type: SlashCommandOptionTypes.ROLE,
+                description: "Role you'd like to set as the muted role.",
+            },
+        ],
+    },
+    {
+        name: 'Administrator Role',
+        id: 'adminrole',
+        category: 'Moderation Roles',
+        description: 'Role for administrators',
+        mongoPropName: 'moderation.roles.admin',
+        defaultValue: undefined,
+        type: SlashCommandOptionTypes.SUB_COMMAND,
+        options: [
+            {
+                name: 'value',
+                type: SlashCommandOptionTypes.ROLE,
+                description: "Role you'd like to set as the administrator role.",
             },
         ],
     },
@@ -254,6 +288,10 @@ export default class Ping extends SlashCommand {
             if (!guild) throw new Error('Command was not ran in a guild');
             const DatabaseGuild = await this.client.database.getGuild(guild);
 
+            let SettingCategorys = SettingOptions.map((r) => r.category).filter(
+                (val, index, arr) => arr.indexOf(val) === index
+            );
+
             return {
                 embeds: [
                     {
@@ -261,21 +299,42 @@ export default class Ping extends SlashCommand {
                             icon_url: this.client.user.dynamicAvatarURL() ?? undefined,
                             name: `${guild.name}'s settings!`,
                         },
-                        description: `To change a setting run </${this.slashCommandData.name} set:${this.id}>.`,
-                        fields: SettingOptions.map((opt) => {
-                            // need to get setting value;
+                        description: `To change a setting run </${
+                            this.slashCommandData.name
+                        } set:${this.id}>.\n\n${SettingCategorys.map(
+                            (cat) =>
+                                `### ${cat}\n${SettingOptions.filter(
+                                    (r) => r.category === cat
+                                )
+                                    .map((opt) => {
+                                        const prop = this.fetchProp(
+                                            opt.mongoPropName,
+                                            DatabaseGuild
+                                        );
 
-                            const value = this.fetchProp(
-                                opt.mongoPropName,
-                                DatabaseGuild
-                            );
+                                        return `- __${opt.name}__ *(${
+                                            opt.id
+                                        })*\n<:reply:1222053196118102018> ${this.readableSettingValue(
+                                            opt,
+                                            prop
+                                        )}`;
+                                    })
+                                    .join('\n')}`
+                        ).join('\n\n')}`,
+                        // fields: SettingOptions.map((opt) => {
+                        //     // need to get setting value;
 
-                            return {
-                                name: `__${opt.name}__ (${opt.id})`,
-                                value: this.readableSettingValue(opt, value),
-                                inline: true,
-                            };
-                        }),
+                        //     const value = this.fetchProp(
+                        //         opt.mongoPropName,
+                        //         DatabaseGuild
+                        //     );
+
+                        //     return {
+                        //         name: `__${opt.name}__ (${opt.id})`,
+                        //         value: this.readableSettingValue(opt, value),
+                        //         inline: true,
+                        //     };
+                        // }),
                         timestamp: new Date(),
                         footer: {
                             text: `${guild.name}'s guild settings`,
