@@ -2,7 +2,10 @@ import type { ObjectId } from 'mongodb';
 
 export type DatabaseUserType = {
     _id: string;
-    experience: number;
+    experience: {
+        value: number;
+        updatedAt?: number;
+    };
     level: number;
     // Command cooldowns
     commandCooldowns?: { [key: string]: number };
@@ -50,6 +53,15 @@ export type DatabaseGuildType = {
             muted?: string;
             // Used to check who's admin and who's not. Used only to send direct messages to administrators.
             admin?: string;
+        };
+
+        automod: {
+            /**
+             *  Wheter we want to detect spam or not.
+             *  The things we will be looking for are as following
+             * -
+             */
+            spamDetection: boolean;
         };
     };
 };

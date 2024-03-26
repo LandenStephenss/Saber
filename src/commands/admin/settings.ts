@@ -1,11 +1,20 @@
 import type {
     AdvancedMessageContent,
     CommandInteraction,
+    ComponentInteraction,
+    ComponentInteractionSelectMenuData,
     GuildTextableChannel,
+    InteractionContentEdit,
+    TextableChannel,
 } from 'eris';
 import type { Bot } from '../../structures/Client.js';
-import { SlashCommand } from '../../structures/SlashCommand.js';
-import { ChannelTypes, SlashCommandOptionTypes, SubCommandOption } from '../../types.js';
+import { SlashCommand, parsedCustomId } from '../../structures/SlashCommand.js';
+import {
+    ChannelTypes,
+    MessageComponentTypes,
+    SlashCommandOptionTypes,
+    SubCommandOption,
+} from '../../types.js';
 import { ConvertedCommandOptions } from '../../events/interactionCreate.js';
 /**
  * {} = Optional Parameter
@@ -166,9 +175,34 @@ const SettingOptions: (SubCommandOption & {
             },
         ],
     },
+    {
+        name: 'Spam Detection',
+        id: 'spamdetection',
+        mongoPropName: 'moderation.automod.spamDetection',
+        category: 'Auto Moderator',
+        description:
+            'Messages detected as spam will be automatically deleted and logged.',
+        defaultValue: false,
+        type: SlashCommandOptionTypes.SUB_COMMAND,
+        options: [
+            {
+                name: 'value',
+                type: SlashCommandOptionTypes.BOOLEAN,
+                description: "Whether you'd like spam detection or not.",
+            },
+        ],
+    },
 ];
 
+const SettingCategorys = SettingOptions.map((r) => r.category).filter(
+    (val, index, arr) => arr.indexOf(val) === index
+);
+
 export default class Ping extends SlashCommand {
+    customIds = {
+        filter: 'filtersettings',
+    };
+
     constructor(public client: Bot) {
         super({
             name: 'settings',
@@ -220,7 +254,7 @@ export default class Ping extends SlashCommand {
         let prop = obj;
 
         propName.split('.').forEach((e: string) => {
-            prop = prop[e];
+            prop = prop[e] ?? undefined;
         });
 
         return prop;
@@ -230,7 +264,7 @@ export default class Ping extends SlashCommand {
         opt: SubCommandOption & { mongoPropName: string; id: string },
         value: string | boolean | undefined
     ): string {
-        if (!value) return '*Not Set*';
+        if (value === undefined) return '*Not Set*';
 
         switch (opt.options[0].type) {
             case SlashCommandOptionTypes.CHANNEL:
@@ -240,6 +274,155 @@ export default class Ping extends SlashCommand {
                 return `<@&${value.toString()}>`;
             default:
                 return `\`${value.toString()}\``;
+        }
+    }
+
+    // btw this is an absolute shit show that really needs done in a better way but i cbf rn.
+    // @ts-expect-error cuz of weird type 3 thing
+    async handleMessageComponent(
+        interaction: ComponentInteraction,
+        { id }: parsedCustomId
+    ) {
+        const guild = this.client.resolveGuild(interaction.guildID!);
+        if (!guild) throw new Error('Command was not ran in a guild');
+        const DatabaseGuild = await this.client.database.getGuild(guild);
+
+        switch (id) {
+            case this.customIds.filter:
+                const value = (interaction.data as ComponentInteractionSelectMenuData)
+                    .values[0];
+
+                if (value === 'all') {
+                    return {
+                        components: [
+                            {
+                                type: MessageComponentTypes.ACTION_ROW,
+                                components: [
+                                    {
+                                        type: MessageComponentTypes.STRING_SELECT,
+                                        custom_id: this.customIds.filter,
+                                        options: [
+                                            {
+                                                label: 'All Setting Types',
+                                                value: 'all',
+                                            },
+                                            ...SettingCategorys.map((str) => ({
+                                                label: str,
+                                                value: str,
+                                            })),
+                                        ],
+                                    },
+                                ],
+                            },
+                        ],
+                        embeds: [
+                            {
+                                author: {
+                                    icon_url:
+                                        this.client.user.dynamicAvatarURL() ?? undefined,
+                                    name: `${guild.name}'s settings!`,
+                                },
+                                description: `To change a setting run </${
+                                    this.slashCommandData.name
+                                } set:${this.id}>.\n\n${SettingCategorys.map(
+                                    (cat) =>
+                                        `### ${cat}\n${SettingOptions.filter(
+                                            (r) => r.category === cat
+                                        )
+                                            .map((opt) => {
+                                                const prop = this.fetchProp(
+                                                    opt.mongoPropName,
+                                                    DatabaseGuild
+                                                );
+
+                                                return `- __${opt.name}__ *(${
+                                                    opt.id
+                                                })* - ${
+                                                    opt.description
+                                                }\n<:reply:1222053196118102018> ${this.readableSettingValue(
+                                                    opt,
+                                                    prop
+                                                )}`;
+                                            })
+                                            .join('\n')}`
+                                ).join('\n\n')}`,
+                                timestamp: new Date(),
+                                footer: {
+                                    text: `${guild.name}'s guild settings`,
+                                    icon_url: guild.dynamicIconURL() ?? undefined,
+                                },
+                            },
+                        ],
+                    };
+                } else {
+                    return {
+                        components: [
+                            {
+                                type: MessageComponentTypes.ACTION_ROW,
+                                components: [
+                                    {
+                                        type: MessageComponentTypes.STRING_SELECT,
+                                        custom_id: this.customIds.filter,
+                                        options: [
+                                            {
+                                                label: 'All Setting Types',
+                                                value: 'all',
+                                            },
+                                            ...SettingCategorys.map((str) => ({
+                                                label: str,
+                                                value: str,
+                                            })),
+                                        ],
+                                    },
+                                ],
+                            },
+                        ],
+                        embeds: [
+                            {
+                                author: {
+                                    icon_url:
+                                        this.client.user.dynamicAvatarURL() ?? undefined,
+                                    name: `${guild.name}'s settings!`,
+                                },
+                                description: `To change a setting run </${
+                                    this.slashCommandData.name
+                                } set:${this.id}>.\n\n${SettingCategorys.filter(
+                                    (c) => c === value
+                                )
+                                    .map(
+                                        (cat) =>
+                                            `### ${cat}\n${SettingOptions.filter(
+                                                (r) => r.category === cat
+                                            )
+                                                .map((opt) => {
+                                                    const prop = this.fetchProp(
+                                                        opt.mongoPropName,
+                                                        DatabaseGuild
+                                                    );
+
+                                                    return `- __${opt.name}__ *(${
+                                                        opt.id
+                                                    })* - ${
+                                                        opt.description
+                                                    }\n<:reply:1222053196118102018> ${this.readableSettingValue(
+                                                        opt,
+                                                        prop
+                                                    )}`;
+                                                })
+                                                .join('\n')}`
+                                    )
+                                    .join('\n\n')}`,
+                                timestamp: new Date(),
+                                footer: {
+                                    text: `${guild.name}'s ${value} settings`,
+                                    icon_url: guild.dynamicIconURL() ?? undefined,
+                                },
+                            },
+                        ],
+                    };
+                }
+
+                break;
         }
     }
 
@@ -271,7 +454,9 @@ export default class Ping extends SlashCommand {
                 return {
                     embeds: [
                         {
-                            description: `${optionName} has been updated to ${this.readableSettingValue(
+                            description: `**${
+                                option.name
+                            }** has been updated to ${this.readableSettingValue(
                                 option,
                                 optionValue as string | boolean | undefined
                             )}`,
@@ -288,11 +473,28 @@ export default class Ping extends SlashCommand {
             if (!guild) throw new Error('Command was not ran in a guild');
             const DatabaseGuild = await this.client.database.getGuild(guild);
 
-            let SettingCategorys = SettingOptions.map((r) => r.category).filter(
-                (val, index, arr) => arr.indexOf(val) === index
-            );
-
             return {
+                components: [
+                    {
+                        type: MessageComponentTypes.ACTION_ROW,
+                        components: [
+                            {
+                                type: MessageComponentTypes.STRING_SELECT,
+                                custom_id: this.customIds.filter,
+                                options: [
+                                    {
+                                        label: 'All Setting Types',
+                                        value: 'all',
+                                    },
+                                    ...SettingCategorys.map((str) => ({
+                                        label: str,
+                                        value: str,
+                                    })),
+                                ],
+                            },
+                        ],
+                    },
+                ],
                 embeds: [
                     {
                         author: {
@@ -312,29 +514,15 @@ export default class Ping extends SlashCommand {
                                             DatabaseGuild
                                         );
 
-                                        return `- __${opt.name}__ *(${
-                                            opt.id
-                                        })*\n<:reply:1222053196118102018> ${this.readableSettingValue(
+                                        return `- __${opt.name}__ *(${opt.id})* - ${
+                                            opt.description
+                                        }\n<:reply:1222053196118102018> ${this.readableSettingValue(
                                             opt,
                                             prop
                                         )}`;
                                     })
                                     .join('\n')}`
                         ).join('\n\n')}`,
-                        // fields: SettingOptions.map((opt) => {
-                        //     // need to get setting value;
-
-                        //     const value = this.fetchProp(
-                        //         opt.mongoPropName,
-                        //         DatabaseGuild
-                        //     );
-
-                        //     return {
-                        //         name: `__${opt.name}__ (${opt.id})`,
-                        //         value: this.readableSettingValue(opt, value),
-                        //         inline: true,
-                        //     };
-                        // }),
                         timestamp: new Date(),
                         footer: {
                             text: `${guild.name}'s guild settings`,

@@ -18,7 +18,9 @@ import { CronJob } from 'cron';
 import type { Bot } from '../structures/Client.js';
 
 export class DatabaseUser {
-    experience = 0;
+    experience = {
+        value: 0,
+    };
     level = 0;
 
     constructor(public _id: string) {}
@@ -27,6 +29,9 @@ export class DatabaseUser {
 export class DatabaseGuild {
     moderation = {
         roles: {},
+        automod: {
+            spamDetection: false,
+        },
     };
 
     constructor(public _id: string) {}
